@@ -45,7 +45,7 @@ export default function SideNavigation({
 
 	return (
 		<>
-			<main className="container-custom grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 pt-24 pb-12 md:pb-12 pb-20 min-h-screen">
+			<main className="container-custom grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 pt-24 pb-24 md:pb-12">
 				<aside className="lg:block hidden">
 					<div className="fixed top-24 w-[240px] space-y-6 h-[calc(100vh-5rem)] overflow-y-auto">
 						<aside className="space-y-1 bg-white p-3 rounded-xl border border-gray-200 shadow-sm sidebar-buttons">

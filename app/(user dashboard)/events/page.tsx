@@ -26,7 +26,7 @@ export default function Events() {
 	const visibleCategories = EVENT_CATEGORIES.slice(0, VISIBLE_CATEGORIES);
 	const dropdownCategories = EVENT_CATEGORIES.slice(VISIBLE_CATEGORIES);
 
-	// Close dropdown when clicking outside or scrolling
+	// Close dropdown when clicking outside or scrolling (but not when scrolling inside dropdown)
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			// Only close if clicking outside both the dropdown and button
@@ -38,7 +38,11 @@ export default function Events() {
 			}
 		};
 
-		const handleScroll = () => {
+		const handleScroll = (event: Event) => {
+			// Don't close if scrolling inside the dropdown
+			if (dropdownRef.current?.contains(event.target as Node)) {
+				return;
+			}
 			if (showDropdown) {
 				setShowDropdown(false);
 			}
