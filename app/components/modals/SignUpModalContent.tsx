@@ -183,13 +183,13 @@ export default function SignUpModalContent({
 			)}
 
 			{/* Logo */}
-			<div className="flex justify-center mb-4">
+			<div className="flex justify-center mb-3 sm:mb-4">
 				<Image
 					src="/chicago-nigeria-logo-1.png"
 					alt="logo"
-					width={140}
-					height={40}
-					className="h-10 object-contain"
+					width={120}
+					height={35}
+					className="h-8 sm:h-10 object-contain"
 				/>
 			</div>
 
@@ -198,9 +198,9 @@ export default function SignUpModalContent({
 			{/* Step 1: Personal Information */}
 			{step === 1 && (
 				<div className="w-full">
-					<div className="flex flex-col items-center space-y-1 mb-6">
-						<User className="w-10 h-10 text-[var(--primary-color)]" />
-						<h1 className="text-2xl font-medium">
+					<div className="flex flex-col items-center space-y-1 mb-4 sm:mb-6">
+						<User className="w-8 h-8 sm:w-10 sm:h-10 text-[var(--primary-color)]" />
+						<h1 className="text-xl sm:text-2xl font-medium">
 							Personal Information
 						</h1>
 						<p className="text-gray-400 text-center text-sm">
@@ -209,7 +209,7 @@ export default function SignUpModalContent({
 					</div>
 
 					{/* First Name & Last Name */}
-					<div className="flex flex-col sm:flex-row sm:gap-2 gap-4 mb-4">
+					<div className="flex flex-col sm:flex-row sm:gap-2 gap-3 mb-3 sm:mb-4">
 						<div className="flex-1">
 							<label className="block text-sm font-medium mb-1">
 								First Name
@@ -217,7 +217,7 @@ export default function SignUpModalContent({
 							<input
 								type="text"
 								{...register("firstName")}
-								className="w-full rounded-lg border border-gray-300 p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200"
+								className="w-full rounded-lg border border-gray-300 p-2.5 sm:p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200"
 								placeholder="Enter your first name"
 							/>
 							<FormFieldErrorMessage error={errors.firstName} />
@@ -229,7 +229,7 @@ export default function SignUpModalContent({
 							<input
 								type="text"
 								{...register("lastName")}
-								className="w-full rounded-lg border border-gray-300 p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200"
+								className="w-full rounded-lg border border-gray-300 p-2.5 sm:p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200"
 								placeholder="Enter your last name"
 							/>
 							<FormFieldErrorMessage error={errors.lastName} />
@@ -237,28 +237,28 @@ export default function SignUpModalContent({
 					</div>
 
 					{/* Email */}
-					<div className="mb-4">
+					<div className="mb-3 sm:mb-4">
 						<label className="block text-sm font-medium mb-1">
 							Email Address
 						</label>
 						<input
 							type="email"
 							{...register("email")}
-							className="w-full rounded-lg border border-gray-300 p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200"
+							className="w-full rounded-lg border border-gray-300 p-2.5 sm:p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200"
 							placeholder="Enter your email address"
 						/>
 						<FormFieldErrorMessage error={errors.email} />
 					</div>
 
 					{/* Phone Number */}
-					<div className="mb-6">
+					<div className="mb-4 sm:mb-6">
 						<label className="block text-sm font-medium mb-1">
 							Phone Number
 						</label>
 						<div className="flex rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[var(--primary-color)]/20 focus-within:border-[var(--primary-color)] border border-gray-300 transition-all duration-200 bg-white">
 							<select
 								{...register("countryCode")}
-								className="bg-white ps-1 py-3 text-sm text-gray-700 focus:outline-none border-r border-gray-300"
+								className="bg-white ps-1 py-2.5 sm:py-3 text-sm text-gray-700 focus:outline-none border-r border-gray-300"
 							>
 								<option value="+1">+1 (US)</option>
 								{/* <option value="+44">+44 (UK)</option>
@@ -268,7 +268,7 @@ export default function SignUpModalContent({
 							<input
 								type="text"
 								{...register("phone")}
-								className="flex-1 px-3 py-3 text-sm sm:text-base focus:outline-none"
+								className="flex-1 px-3 py-2.5 sm:py-3 focus:outline-none"
 								placeholder="Enter your phone number"
 							/>
 						</div>

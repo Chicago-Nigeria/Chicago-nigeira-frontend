@@ -195,3 +195,12 @@ body {
 .animate-scale-in {
   animation: scale-in 0.2s ease-out forwards;
 }
+
+/* Prevent iOS zoom on input focus - minimum 16px font size */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

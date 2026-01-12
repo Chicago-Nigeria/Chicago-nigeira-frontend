@@ -151,29 +151,29 @@ export default function SignInModalContent({
 			)}
 
 			{/* Logo */}
-			<div className="flex justify-center mb-4">
+			<div className="flex justify-center mb-3 sm:mb-4">
 				<Image
 					src="/chicago-nigeria-logo-1.png"
 					alt="logo"
-					width={140}
-					height={40}
-					className="h-10 object-contain"
+					width={120}
+					height={35}
+					className="h-8 sm:h-10 object-contain"
 				/>
 			</div>
 
 			{/* Step 1: Email Input */}
 			{step === 1 && (
 				<div className="w-full">
-					<div className="flex flex-col items-center space-y-1 mb-6">
-						<Mail className="w-10 h-10 text-[var(--primary-color)]" />
-						<h1 className="text-2xl font-medium">Sign In</h1>
+					<div className="flex flex-col items-center space-y-1 mb-4 sm:mb-6">
+						<Mail className="w-8 h-8 sm:w-10 sm:h-10 text-[var(--primary-color)]" />
+						<h1 className="text-xl sm:text-2xl font-medium">Sign In</h1>
 						<p className="text-gray-400 text-center text-sm">
 							Enter your email to receive a verification code
 						</p>
 					</div>
 
 					{/* Email */}
-					<div className="mb-6">
+					<div className="mb-4 sm:mb-6">
 						<label className="block text-sm font-medium mb-1">
 							Email Address
 						</label>
@@ -187,7 +187,7 @@ export default function SignInModalContent({
 								},
 							})}
 							placeholder="Enter your email"
-							className="w-full rounded-lg border border-gray-300 p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200"
+							className="w-full rounded-lg border border-gray-300 p-2.5 sm:p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200"
 						/>
 						<FormFieldErrorMessage error={errors.email} />
 					</div>
@@ -225,16 +225,16 @@ export default function SignInModalContent({
 			{/* Step 2: OTP Verification */}
 			{step === 2 && (
 				<div className="w-full">
-					<div className="flex flex-col items-center space-y-1 mb-6">
-						<Mail className="w-10 h-10 text-[var(--primary-color)]" />
-						<h1 className="text-2xl font-medium">Verify Your Email</h1>
+					<div className="flex flex-col items-center space-y-1 mb-4 sm:mb-6">
+						<Mail className="w-8 h-8 sm:w-10 sm:h-10 text-[var(--primary-color)]" />
+						<h1 className="text-xl sm:text-2xl font-medium">Verify Your Email</h1>
 						<p className="text-gray-400 text-center text-sm">
 							Enter the 6-digit code sent to {email}
 						</p>
 					</div>
 
 					{/* OTP Input */}
-					<div className="mb-4">
+					<div className="mb-3 sm:mb-4">
 						<label className="block text-sm font-medium mb-1">
 							Verification Code
 						</label>
@@ -252,14 +252,14 @@ export default function SignInModalContent({
 								},
 							})}
 							maxLength={6}
-							className="w-full rounded-lg border border-gray-300 p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200 text-center text-2xl tracking-widest"
+							className="w-full rounded-lg border border-gray-300 p-2.5 sm:p-3 focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all duration-200 text-center text-xl sm:text-2xl tracking-widest"
 							placeholder="000000"
 						/>
 						<FormFieldErrorMessage error={errors.otp} />
 					</div>
 
 					{/* Resend OTP */}
-					<div className="text-center mb-6">
+					<div className="text-center mb-4 sm:mb-6">
 						{resendCooldown > 0 ? (
 							<p className="text-sm text-gray-500">
 								Resend code in {resendCooldown}s

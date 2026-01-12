@@ -14,7 +14,7 @@ export default function AuthModal() {
 	}));
 	const { closeModal } = useAuthModal((state) => state.actions);
 
-	// Handle escape key
+	// Handle escape key and body scroll
 	useEffect(() => {
 		const handleEscape = (e: KeyboardEvent) => {
 			if (e.key === "Escape" && isOpen) {
@@ -26,11 +26,19 @@ export default function AuthModal() {
 			document.addEventListener("keydown", handleEscape);
 			// Prevent body scroll when modal is open
 			document.body.style.overflow = "hidden";
+			document.body.style.position = "fixed";
+			document.body.style.width = "100%";
+			document.body.style.top = `-${window.scrollY}px`;
 		}
 
 		return () => {
 			document.removeEventListener("keydown", handleEscape);
-			document.body.style.overflow = "unset";
+			const scrollY = document.body.style.top;
+			document.body.style.overflow = "";
+			document.body.style.position = "";
+			document.body.style.width = "";
+			document.body.style.top = "";
+			window.scrollTo(0, parseInt(scrollY || "0") * -1);
 		};
 	}, [isOpen, closeModal]);
 
@@ -49,16 +57,16 @@ export default function AuthModal() {
 					/>
 
 					{/* Modal Container */}
-					<div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
+					<div className="fixed inset-0 flex items-end sm:items-center justify-center z-50 sm:p-4 pointer-events-none">
 						<motion.div
-							initial={{ opacity: 0, scale: 0.95, y: 20 }}
-							animate={{ opacity: 1, scale: 1, y: 0 }}
-							exit={{ opacity: 0, scale: 0.95, y: 20 }}
+							initial={{ opacity: 0, y: 100 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, y: 100 }}
 							transition={{
 								duration: 0.3,
 								ease: [0.4, 0, 0.2, 1],
 							}}
-							className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto pointer-events-auto"
+							className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md max-h-[85vh] sm:max-h-[90vh] overflow-y-auto pointer-events-auto"
 						>
 							{/* Close Button */}
 							<button
@@ -69,8 +77,13 @@ export default function AuthModal() {
 								<X className="w-5 h-5 text-gray-500" />
 							</button>
 
+							{/* Drag indicator for mobile */}
+							<div className="sm:hidden flex justify-center pt-3">
+								<div className="w-10 h-1 bg-gray-300 rounded-full" />
+							</div>
+
 							{/* Modal Content */}
-							<div className="p-6 sm:p-8">
+							<div className="p-5 sm:p-8">
 								{/* Render appropriate modal content based on mode */}
 								<AnimatePresence mode="wait">
 									{mode === "signin" ? (
