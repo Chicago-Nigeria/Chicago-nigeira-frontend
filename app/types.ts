@@ -47,7 +47,7 @@ export type postDetailsType = {
 };
 
 export interface ApiResponse<T> {
-  meta: any;
+  meta?: any;
   success: "Success" | "Error";
   data: T;
   message: string;

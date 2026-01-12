@@ -159,7 +159,7 @@ export const callApi = async <T>(
 
       if (error.response.status === 500) {
         toast.error("Server error - please try again later");
-        err.message = "Server error. Please try again later.";
+        if (err) err.message = "Server error. Please try again later.";
       }
 
       if (!error.response) {
