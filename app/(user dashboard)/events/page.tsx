@@ -18,22 +18,57 @@ export default function Events() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showDropdown, setShowDropdown] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const buttonRef = useRef<HTMLButtonElement>(null);
+	const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
 
 	// Number of categories to show before dropdown
 	const VISIBLE_CATEGORIES = 5;
 	const visibleCategories = EVENT_CATEGORIES.slice(0, VISIBLE_CATEGORIES);
 	const dropdownCategories = EVENT_CATEGORIES.slice(VISIBLE_CATEGORIES);
 
-	// Close dropdown when clicking outside
+	// Close dropdown when clicking outside or scrolling
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+			// Only close if clicking outside both the dropdown and button
+			const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target as Node);
+			const isOutsideButton = buttonRef.current && !buttonRef.current.contains(event.target as Node);
+
+			if (isOutsideDropdown && isOutsideButton) {
 				setShowDropdown(false);
 			}
 		};
+
+		const handleScroll = () => {
+			if (showDropdown) {
+				setShowDropdown(false);
+			}
+		};
+
 		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
+		window.addEventListener("scroll", handleScroll, true); // true for capture phase to catch all scroll events
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+			window.removeEventListener("scroll", handleScroll, true);
+		};
+	}, [showDropdown]);
+
+	// Handle dropdown toggle and position calculation
+	const handleDropdownToggle = () => {
+		if (showDropdown) {
+			setShowDropdown(false);
+			return;
+		}
+
+		if (buttonRef.current) {
+			const rect = buttonRef.current.getBoundingClientRect();
+			setDropdownPosition({
+				top: rect.bottom + 8,
+				right: window.innerWidth - rect.right,
+			});
+		}
+		setShowDropdown(true);
+	};
 
 	return (
 		<>
@@ -89,43 +124,49 @@ export default function Events() {
 						</button>
 					))}
 
-					{/* More Categories Dropdown */}
-					<div className="relative flex-shrink-0" ref={dropdownRef}>
-						<button
-							onClick={() => setShowDropdown(!showDropdown)}
-							className={`px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap flex items-center gap-1 ${
-								dropdownCategories.includes(selectedCategory)
-									? "bg-[var(--primary-color)] text-white"
-									: "bg-white text-gray-700 border border-gray-200 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)]"
-							}`}
-						>
-							{dropdownCategories.includes(selectedCategory) ? selectedCategory : "More"}
-							<ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? "rotate-180" : ""}`} />
-						</button>
-
-						{/* Dropdown Menu */}
-						{showDropdown && (
-							<div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[200px] max-h-[300px] overflow-y-auto">
-								{dropdownCategories.map((category) => (
-									<button
-										key={category}
-										onClick={() => {
-											setSelectedCategory(category);
-											setShowDropdown(false);
-										}}
-										className={`w-full text-left px-4 py-2 text-sm transition ${
-											selectedCategory === category
-												? "bg-[var(--primary-color)] text-white"
-												: "text-gray-700 hover:bg-gray-50"
-										}`}
-									>
-										{category}
-									</button>
-								))}
-							</div>
-						)}
-					</div>
+					{/* More Categories Button - Inside scrollable container */}
+					<button
+						ref={buttonRef}
+						onClick={handleDropdownToggle}
+						className={`px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap flex items-center gap-1 flex-shrink-0 ${
+							dropdownCategories.includes(selectedCategory)
+								? "bg-[var(--primary-color)] text-white"
+								: "bg-white text-gray-700 border border-gray-200 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)]"
+						}`}
+					>
+						{dropdownCategories.includes(selectedCategory) ? selectedCategory : "More"}
+						<ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? "rotate-180" : ""}`} />
+					</button>
 				</div>
+
+				{/* Dropdown Menu - Fixed position to escape overflow container */}
+				{showDropdown && (
+					<div
+						ref={dropdownRef}
+						className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 w-[200px] max-h-[300px] overflow-y-auto"
+						style={{
+							top: dropdownPosition.top,
+							right: dropdownPosition.right,
+						}}
+					>
+						{dropdownCategories.map((category) => (
+							<button
+								key={category}
+								onClick={() => {
+									setSelectedCategory(category);
+									setShowDropdown(false);
+								}}
+								className={`w-full text-left px-4 py-2 text-sm transition ${
+									selectedCategory === category
+										? "bg-[var(--primary-color)] text-white"
+										: "text-gray-700 hover:bg-gray-50"
+								}`}
+							>
+								{category}
+							</button>
+						))}
+					</div>
+				)}
 			</div>
 
 			{/* Main Layout - Two Columns */}
