@@ -903,15 +903,15 @@ export default function Index() {
                 <p className="font-semibold">Email:</p>
                 <Link
                   className="text-gray-400"
-                  href={"mailto:info@chicagonigeria.com"}
+                  href={"mailto:contact@chicagonigerians.com"}
                 >
-                  info@chicagonigeria.com
+                  contact@chicagonigerians.com
                 </Link>
               </li>
               <li className="">
                 <p className="font-semibold">Phone:</p>
-                <Link className="text-gray-400" href={"tel:+1(312)555-0123"}>
-                  +1 (312) 555-0123
+                <Link className="text-gray-400" href={"tel:+1(224)245-6588"}>
+                +1 (224) 245-6588
                 </Link>
               </li>
               <li className="">
@@ -931,7 +931,7 @@ export default function Index() {
           transition={{ delay: 0.4 }}
           viewport={{ once: true }}
         >
-          <p>&copy; 2025 Chicago Nigeria, All Rights Reserved</p>
+          <p>&copy; 2026 Chicago Nigeria, All Rights Reserved</p>
           <div className="space-x-4">
             <Link href={"/privacy-policy"}>Privacy Policy</Link>
             <Link href={"/terms-of-service"}>Terms of Service</Link>
