@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+:root {
+  --orange-color: #7a1b00;
+  --purple-color: #ac0ea1;
+  --primary-color: #037244;
+  --primary-color-light: #03724421;
+  --blue-color: #0045f8;
+}
+.container-custom {
+  width: 90%;
+  margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  .container-custom {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container-custom {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-custom {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container-custom {
+    max-width: 1280px;
+  }
+}
+
+.hover-effect-for-dropdown-links a,
+.hover-effect-for-dropdown-links li > button {
+  @apply flex px-4 py-2 hover:bg-[var(--primary-color-light)] rounded-md;
+}
+.community-stats-items:not(.quick-actions) > div {
+  @apply flex justify-between items-center;
+  p {
+    &:first-child {
+      @apply text-sm;
+    }
+    &:last-child {
+      @apply text-[var(--primary-color)];
+    }
+  }
+}
+.community-stats-items.quick-actions > div {
+  @apply flex justify-start gap-2 items-center text-gray-700;
+  p {
+    @apply text-sm;
+  }
+}
+
+.user-page-top {
+  > button {
+    @apply cursor-pointer text-sm inline-flex items-center gap-2;
+  }
+  > button:not(:last-child) {
+    @apply py-2 px-4 border border-gray-400 rounded-md mb-0;
+  }
+}
+/* etc */
+.sidebar-buttons > a {
+  @apply block hover:bg-gray-50 transition-colors duration-150 text-sm rounded-lg text-left px-3 py-2.5 cursor-pointer flex gap-3 items-center w-full text-gray-700;
+}
+.sidebar-buttons > a.activeSideNav,
+.sidebar-buttons > a[class*="bg-[var(--primary-color)]"] {
+  @apply bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/90;
+}
+
+.feed-post-actions > * {
+  @apply inline-flex font-light items-center gap-1 mb-0;
+}
+.form-style {
+  display: none;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 3px;
+}
+.activeSideNav {
+  @apply bg-[var(--primary-color)] text-white;
+}
+
+.signup-form {
+  input {
+    @apply w-full bg-gray-100 py-2 px-4 rounded-lg text-sm mt-0.5;
+  }
+
+  div:has(> input) {
+    @apply md:flex-1 w-full;
+  }
+}
+body {
+  background: linear-gradient(to right,  #F0F9F5 0%, #f4f8f6 50%, #fef8f8 100%);
+  font-family: var(--font-inter);
+  max-width: 1920px;
+  margin-inline: auto;
+}
+
+@layer components {
+  .button-hover-effect > button {
+    @apply transition-colors duration-200 hover:bg-[var(--primary-color)] hover:text-white rounded-md;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-left {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+.animate-slide-out-left {
+  animation: slide-out-left 0.3s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out forwards;
+}
+
+.animate-slide-out-right {
+  animation: slide-out-right 0.3s ease-out forwards;
+}
+
+/* Hide scrollbar for horizontal scrolling categories */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Modal animations */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out forwards;
+}
