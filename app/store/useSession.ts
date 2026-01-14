@@ -46,6 +46,12 @@ export const initSession = create<Session>()((set, get) => ({
     clearSession: () => {
       set({ user: null, loading: false });
 
+      // Clear tokens from localStorage
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+      }
+
       // Don't force redirect - let user continue browsing
       if (!get().isFirstMount) {
         toast.info(

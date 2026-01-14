@@ -30,6 +30,12 @@ const getCookie = (name: string): string | null => {
   return null;
 };
 
+// Helper to get token from localStorage (for cross-origin auth)
+const getStoredToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("accessToken");
+};
+
 export const callApi = async <T>(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
@@ -58,6 +64,12 @@ export const callApi = async <T>(
     const headers: Record<string, string> = {
       "x-referer": frontendURL,
     };
+
+    // Add Authorization header if token exists in localStorage (for cross-origin auth)
+    const storedToken = getStoredToken();
+    if (storedToken) {
+      headers["Authorization"] = `Bearer ${storedToken}`;
+    }
 
     // Only set Content-Type for JSON, NOT for FormData
     if (isJSONObject) {

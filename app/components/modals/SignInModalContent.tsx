@@ -106,7 +106,7 @@ export default function SignInModalContent({
 
 		// Step 2: Verify OTP and sign in
 		try {
-			const { data, error } = await callApi<ApiResponse<IUser>>(
+			const { data, error } = await callApi<ApiResponse<IUser> & { accessToken?: string; refreshToken?: string }>(
 				`/auth/signin-with-otp`,
 				"POST",
 				{ email: formData.email, otp: formData.otp },
@@ -116,6 +116,14 @@ export default function SignInModalContent({
 
 			if (!data?.data) {
 				throw new Error("Could not sign in!");
+			}
+
+			// Store tokens in localStorage for cross-origin auth
+			if (data.accessToken) {
+				localStorage.setItem("accessToken", data.accessToken);
+			}
+			if (data.refreshToken) {
+				localStorage.setItem("refreshToken", data.refreshToken);
 			}
 
 			toast.success(data?.message || "Signed in successfully!");

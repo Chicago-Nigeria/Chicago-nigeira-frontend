@@ -134,7 +134,7 @@ export default function SignUpModalContent({
 		// Step 2: Verify OTP and create account
 		try {
 			const { data: signupData, error } = await callApi<
-				ApiResponse<IUser>
+				ApiResponse<IUser> & { accessToken?: string; refreshToken?: string }
 			>("/auth/signup-simple", "POST", {
 				firstName: data.firstName,
 				lastName: data.lastName,
@@ -149,6 +149,14 @@ export default function SignUpModalContent({
 
 			if (!signupData?.data) {
 				throw new Error("Could not create account!");
+			}
+
+			// Store tokens in localStorage for cross-origin auth
+			if (signupData.accessToken) {
+				localStorage.setItem("accessToken", signupData.accessToken);
+			}
+			if (signupData.refreshToken) {
+				localStorage.setItem("refreshToken", signupData.refreshToken);
 			}
 
 			toast.success(signupData?.message || "Account created successfully!");
