@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useAuthModal } from "@/app/store/useAuthModal";
@@ -13,6 +13,30 @@ export default function AuthModal() {
 		context: state.context,
 	}));
 	const { closeModal } = useAuthModal((state) => state.actions);
+	const [viewportHeight, setViewportHeight] = useState("100%");
+	const scrollYRef = useRef(0);
+
+	// Handle viewport resize (for mobile keyboard)
+	useEffect(() => {
+		if (!isOpen) return;
+
+		const updateViewportHeight = () => {
+			// Use visualViewport for accurate height on mobile
+			const vh = window.visualViewport?.height || window.innerHeight;
+			setViewportHeight(`${vh}px`);
+		};
+
+		updateViewportHeight();
+
+		// Listen to visualViewport resize (keyboard open/close)
+		window.visualViewport?.addEventListener("resize", updateViewportHeight);
+		window.addEventListener("resize", updateViewportHeight);
+
+		return () => {
+			window.visualViewport?.removeEventListener("resize", updateViewportHeight);
+			window.removeEventListener("resize", updateViewportHeight);
+		};
+	}, [isOpen]);
 
 	// Handle escape key and body scroll
 	useEffect(() => {
@@ -24,21 +48,19 @@ export default function AuthModal() {
 
 		if (isOpen) {
 			document.addEventListener("keydown", handleEscape);
-			// Prevent body scroll when modal is open
+			// Save scroll position
+			scrollYRef.current = window.scrollY;
+			// Prevent body scroll - simpler approach that works better on mobile
 			document.body.style.overflow = "hidden";
-			document.body.style.position = "fixed";
-			document.body.style.width = "100%";
-			document.body.style.top = `-${window.scrollY}px`;
+			document.documentElement.style.overflow = "hidden";
 		}
 
 		return () => {
 			document.removeEventListener("keydown", handleEscape);
-			const scrollY = document.body.style.top;
 			document.body.style.overflow = "";
-			document.body.style.position = "";
-			document.body.style.width = "";
-			document.body.style.top = "";
-			window.scrollTo(0, parseInt(scrollY || "0") * -1);
+			document.documentElement.style.overflow = "";
+			// Restore scroll position
+			window.scrollTo(0, scrollYRef.current);
 		};
 	}, [isOpen, closeModal]);
 
@@ -54,10 +76,14 @@ export default function AuthModal() {
 						transition={{ duration: 0.2 }}
 						onClick={closeModal}
 						className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+						style={{ height: viewportHeight }}
 					/>
 
 					{/* Modal Container */}
-					<div className="fixed inset-0 flex items-end sm:items-center justify-center z-50 sm:p-4 pointer-events-none">
+					<div
+						className="fixed inset-x-0 top-0 flex items-end sm:items-center justify-center z-50 sm:p-4 pointer-events-none"
+						style={{ height: viewportHeight }}
+					>
 						<motion.div
 							initial={{ opacity: 0, y: 100 }}
 							animate={{ opacity: 1, y: 0 }}
@@ -66,7 +92,7 @@ export default function AuthModal() {
 								duration: 0.3,
 								ease: [0.4, 0, 0.2, 1],
 							}}
-							className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md max-h-[85vh] sm:max-h-[90vh] overflow-y-auto pointer-events-auto"
+							className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md max-h-[85%] sm:max-h-[90%] overflow-y-auto pointer-events-auto"
 						>
 							{/* Close Button */}
 							<button
