@@ -165,32 +165,32 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1">
             Manage and monitor all platform users
           </p>
         </div>
-        <button className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 flex items-center gap-2">
-          <UserPlus className="h-5 w-5" />
+        <button className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 flex items-center justify-center gap-2 text-sm md:text-base">
+          <UserPlus className="h-4 w-4 md:h-5 md:w-5" />
           Add Admin
         </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
+      <div className="bg-white rounded-lg shadow-sm p-3 md:p-4">
         {!loading && total > 0 && (
-          <div className="mb-4">
-            <p className="text-sm text-gray-600">
+          <div className="mb-3 md:mb-4">
+            <p className="text-xs md:text-sm text-gray-600">
               Showing <span className="font-medium text-gray-900">{users.length}</span> of{' '}
               <span className="font-medium text-gray-900">{total}</span> users
             </p>
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -223,8 +223,8 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {/* Users Table - Desktop */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader />
@@ -400,7 +400,7 @@ export default function UsersPage() {
           </div>
         )}
 
-        {/* Pagination */}
+        {/* Pagination - Desktop */}
         {!loading && users.length > 0 && (
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <p className="text-sm text-gray-700">
@@ -423,6 +423,126 @@ export default function UsersPage() {
               </button>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Users Cards - Mobile */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="flex items-center justify-center py-12 bg-white rounded-lg">
+            <Loader />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="bg-white rounded-lg p-6 text-center text-gray-500">
+            No users found
+          </div>
+        ) : (
+          <>
+            {users.map((user) => (
+              <div key={user.id} className="bg-white rounded-lg shadow-sm p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-emerald-700 font-medium text-sm">
+                        {user.firstName?.[0] || 'U'}{user.lastName?.[0] || 'U'}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                        {user.firstName} {user.lastName}
+                      </h3>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={(e) => handleDropdownToggle(user.id, e)}
+                      className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                    {showDropdown === user.id && (
+                      <>
+                        <div className="fixed inset-0 z-[100]" onClick={() => setShowDropdown(null)} />
+                        <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1.5 z-[101]">
+                          <button
+                            onClick={() => { setShowDetailsModal(user); setShowDropdown(null); }}
+                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View
+                          </button>
+                          {user.isActive ? (
+                            <button
+                              onClick={() => { setShowBanModal(user); setShowDropdown(null); }}
+                              className="w-full px-3 py-2 text-left text-sm text-orange-600 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                              <Ban className="h-4 w-4" />
+                              Ban
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => { setShowUnbanModal(user); setShowDropdown(null); }}
+                              className="w-full px-3 py-2 text-left text-sm text-green-600 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Unban
+                            </button>
+                          )}
+                          <button
+                            onClick={() => { setShowDeleteModal(user); setShowDropdown(null); }}
+                            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getRoleBadgeColor(user.role)}`}>
+                    {user.role}
+                  </span>
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {user.isActive ? 'Active' : 'Banned'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                  <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+                  <span>{user._count.posts} posts • {user._count.events} events</span>
+                </div>
+              </div>
+            ))}
+
+            {/* Pagination - Mobile */}
+            {users.length > 0 && (
+              <div className="bg-white rounded-lg p-3 flex items-center justify-between">
+                <p className="text-xs text-gray-600">
+                  Page {page} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-3 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-3 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -114,34 +114,34 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+        <p className="text-sm md:text-base text-gray-600 mt-1">
           Welcome back! Here's what's happening with your platform.
         </p>
       </div>
 
       {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-lg shadow-sm p-3 md:p-6 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                  <h3 className="text-2xl font-bold text-gray-900 mt-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs md:text-sm font-medium text-gray-600 truncate">{card.title}</p>
+                  <h3 className="text-lg md:text-2xl font-bold text-gray-900 mt-1 md:mt-2">
                     {card.value}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1">{card.subtitle}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 md:mt-1 truncate">{card.subtitle}</p>
                 </div>
-                <div className={`${card.bgColor} p-3 rounded-lg`}>
-                  <Icon className={`h-6 w-6 ${card.iconColor}`} />
+                <div className={`${card.bgColor} p-2 md:p-3 rounded-lg flex-shrink-0`}>
+                  <Icon className={`h-4 w-4 md:h-6 md:w-6 ${card.iconColor}`} />
                 </div>
               </div>
             </div>
@@ -150,17 +150,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* User Growth Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth (Last 7 Months)</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">User Growth (Last 7 Months)</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <LineChart data={stats?.userGrowth || []}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line
                 type="monotone"
                 dataKey="users"
@@ -173,17 +173,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Revenue by Source Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Source</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Revenue by Source</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <BarChart data={stats?.revenueBySource || []}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="source" />
-              <YAxis />
+              <XAxis dataKey="source" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+              <YAxis tick={{ fontSize: 12 }} />
               <Tooltip
                 formatter={(value: number) => `$${value.toFixed(2)}`}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="amount" fill="#068E52" name="Revenue ($)" />
             </BarChart>
           </ResponsiveContainer>
@@ -191,11 +191,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* User Types Pie Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">User Types Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">User Types Distribution</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={stats?.userTypes || []}
@@ -203,7 +203,7 @@ export default function DashboardPage() {
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name}: ${value}`}
-                outerRadius={80}
+                outerRadius={70}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -212,15 +212,15 @@ export default function DashboardPage() {
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent User Activity</h3>
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Recent User Activity</h3>
+          <div className="space-y-3 md:space-y-4 max-h-[300px] overflow-y-auto">
             {activities.length > 0 ? (
               activities.map((activity, index) => {
                 const getActivityColor = () => {

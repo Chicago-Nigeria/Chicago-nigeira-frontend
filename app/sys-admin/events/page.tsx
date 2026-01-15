@@ -16,7 +16,9 @@ import {
   User,
   Ticket,
   X,
+  Plus,
 } from 'lucide-react';
+import AdminCreateEventForm from './components/AdminCreateEventForm';
 import { toast } from 'sonner';
 import {Loader} from '@/app/components/loader';
 
@@ -91,6 +93,7 @@ export default function EventsPage() {
   const [showDetailsModal, setShowDetailsModal] = useState<Event | null>(null);
   const [totalServiceFees, setTotalServiceFees] = useState(0);
   const [loadingServiceFees, setLoadingServiceFees] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -196,35 +199,46 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header with Service Fees Card */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Event Management</h1>
-          <p className="text-gray-600 mt-1">
+    <div className="space-y-4 md:space-y-6">
+      {/* Header with Create Button and Service Fees Card */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Event Management</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1">
             Monitor and manage all platform events
           </p>
         </div>
 
-        {/* Total Service Fees Card */}
-        <div className="bg-emerald-600 text-white rounded-lg p-4 min-w-[200px]">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-emerald-100 text-sm">Total Service Fees</p>
-              <h3 className="text-2xl font-bold mt-1">
-                {loadingServiceFees ? (
-                  <span className="text-lg">Loading...</span>
-                ) : (
-                  `$${totalServiceFees.toFixed(2)}`
-                )}
-              </h3>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+          {/* Create Event Button */}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition shadow-sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Event</span>
+          </button>
+
+          {/* Total Service Fees Card */}
+          <div className="bg-emerald-600 text-white rounded-lg p-3 sm:p-4 sm:min-w-[200px]">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-emerald-100 text-xs sm:text-sm">Total Service Fees</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1">
+                  {loadingServiceFees ? (
+                    <span className="text-base sm:text-lg">Loading...</span>
+                  ) : (
+                    `$${totalServiceFees.toFixed(2)}`
+                  )}
+                </h3>
+              </div>
+              <div className="bg-emerald-500 p-2 rounded-lg">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+              </div>
             </div>
-            <div className="bg-emerald-500 p-2 rounded-lg">
-              <DollarSign className="h-5 w-5" />
+            <div className="flex items-center gap-1 mt-2">
+              <span className="text-xs sm:text-sm text-emerald-100">5% of ticket sales</span>
             </div>
-          </div>
-          <div className="flex items-center gap-1 mt-2">
-            <span className="text-sm text-emerald-100">5% of ticket sales</span>
           </div>
         </div>
       </div>
@@ -256,8 +270,8 @@ export default function EventsPage() {
         </div>
       </div>
 
-      {/* Events Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-visible">
+      {/* Events Table - Desktop */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-visible">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader />
@@ -406,7 +420,7 @@ export default function EventsPage() {
           </div>
         )}
 
-        {/* Pagination */}
+        {/* Pagination - Desktop */}
         {!loading && events.length > 0 && (
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <p className="text-sm text-gray-700">
@@ -432,29 +446,140 @@ export default function EventsPage() {
         )}
       </div>
 
+      {/* Events Cards - Mobile */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="flex items-center justify-center py-12 bg-white rounded-lg">
+            <Loader />
+          </div>
+        ) : events.length === 0 ? (
+          <div className="bg-white rounded-lg p-6 text-center text-gray-500">
+            No events found
+          </div>
+        ) : (
+          <>
+            {events.map((event) => (
+              <div key={event.id} className="bg-white rounded-lg shadow-sm p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-900 truncate">{event.title}</h3>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">{event.location}</p>
+                  </div>
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={() => setShowDropdown(showDropdown === event.id ? null : event.id)}
+                      className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                    {showDropdown === event.id && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(null)} />
+                        <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1.5 z-20">
+                          <button
+                            onClick={() => handleViewDetails(event.id)}
+                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View Details
+                          </button>
+                          <button
+                            onClick={() => { setShowApproveModal(event); setShowDropdown(null); }}
+                            className="w-full px-3 py-2 text-left text-sm text-emerald-600 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => { setShowDeleteModal(event); setShowDropdown(null); }}
+                            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadgeColor(event.status)}`}>
+                    {event.status}
+                  </span>
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${event.isFree ? 'bg-gray-100 text-gray-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {event.isFree ? 'Free' : 'Paid'}
+                  </span>
+                  <span className="text-xs text-gray-500">{event.category}</span>
+                </div>
+
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {new Date(event.startDate).toLocaleDateString()}
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <User className="h-3.5 w-3.5" />
+                    {event.organizer.firstName} {event.organizer.lastName}
+                  </div>
+                  <div className="text-xs text-gray-700 font-medium">
+                    {event.isFree ? `${event._count.registrations} reg` : `${event._count.tickets} tix`}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Pagination - Mobile */}
+            {events.length > 0 && (
+              <div className="bg-white rounded-lg p-3 flex items-center justify-between">
+                <p className="text-xs text-gray-600">
+                  Page {page} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-3 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-3 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       {/* Approve Modal */}
       {showApproveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full mx-4">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
               Approve Event
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
               Are you sure you want to approve "{showApproveModal.title}"? The event
               will be visible to all users.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowApproveModal(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="flex-1 px-3 md:px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleApproveEvent(showApproveModal.id)}
-                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                className="flex-1 px-3 md:px-4 py-2 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700"
               >
-                Approve Event
+                Approve
               </button>
             </div>
           </div>
@@ -463,27 +588,27 @@ export default function EventsPage() {
 
       {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full mx-4">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
               Delete Event
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
               Are you sure you want to delete "{showDeleteModal.title}"? This
               action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="flex-1 px-3 md:px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDeleteEvent(showDeleteModal.id)}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                className="flex-1 px-3 md:px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
               >
-                Delete Event
+                Delete
               </button>
             </div>
           </div>
@@ -819,6 +944,17 @@ export default function EventsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Create Event Modal */}
+      {showCreateModal && (
+        <AdminCreateEventForm
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            fetchEvents();
+            fetchServiceFees();
+          }}
+        />
       )}
     </div>
   );

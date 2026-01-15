@@ -85,6 +85,7 @@ export default function Events() {
 					</p>
 				</div>
 
+	{/* Create Event button temporarily disabled - events are created by admins
 				<Link
 					href="/events/create-event"
 					className="flex items-center gap-2 justify-center px-4 py-2.5 rounded-lg text-sm font-medium bg-[var(--primary-color)] text-white w-full sm:w-auto hover:bg-[var(--primary-color)]/90 transition shadow-sm"
@@ -92,6 +93,7 @@ export default function Events() {
 					<Plus className="w-4 h-4" />
 					<span className="whitespace-nowrap">Create Event</span>
 				</Link>
+				*/}
 			</div>
 
 			{/* My Events - Mobile View (above search and events) */}

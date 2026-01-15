@@ -17,6 +17,7 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [initialLoad, setInitialLoad] = useState(true);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // Fetch admin session on mount (will skip if recently fetched)
   useEffect(() => {
@@ -31,6 +32,11 @@ export default function AdminLayout({
       router.push('/sys-admin/auth/login');
     }
   }, [admin, loading, router, pathname, initialLoad]);
+
+  // Close mobile nav when route changes
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [pathname]);
 
   // Show loader only on initial load if we don't have persisted admin data
   if (initialLoad && loading && !admin) {
@@ -53,10 +59,13 @@ export default function AdminLayout({
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-emerald-50 via-white to-white overflow-hidden">
-      <AdminNav />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminTopNav />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <AdminNav
+        isOpen={isMobileNavOpen}
+        onClose={() => setIsMobileNavOpen(false)}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
+        <AdminTopNav onMenuClick={() => setIsMobileNavOpen(true)} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   );
