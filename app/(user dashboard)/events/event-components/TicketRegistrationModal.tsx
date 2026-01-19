@@ -269,9 +269,9 @@ export default function TicketRegistrationModal({
 	}
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm">
+		<div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm pb-[70px] sm:pb-0">
 			<div
-				className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col"
+				className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[calc(100vh-90px)] sm:max-h-[90vh] flex flex-col"
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Header */}
@@ -436,8 +436,6 @@ export default function TicketRegistrationModal({
 							</div>
 						)}
 
-						{/* Spacer to prevent content from being hidden under sticky buttons */}
-						<div className="h-20 sm:h-0"></div>
 					</form>
 				)}
 
@@ -509,9 +507,6 @@ export default function TicketRegistrationModal({
 								setIsProcessing={setIsSubmitting}
 							/>
 						</Elements>
-
-						{/* Spacer for mobile */}
-						<div className="h-16 sm:h-0"></div>
 					</div>
 				)}
 
