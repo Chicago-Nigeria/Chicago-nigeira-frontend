@@ -88,9 +88,9 @@ export default function DashboardPage() {
       iconColor: 'text-purple-600',
     },
     {
-      title: 'Revenue',
+      title: 'Service Fee Revenue',
       value: `$${(stats?.revenue || 0).toLocaleString()}`,
-      subtitle: 'From event tickets',
+      subtitle: '$5 per ticket sold',
       icon: DollarSign,
       bgColor: 'bg-green-50',
       iconColor: 'text-green-600',

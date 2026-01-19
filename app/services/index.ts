@@ -19,3 +19,9 @@ export namespace Listing {
     return callApi<ApiResponse<IListing>>(`/listing/${id}`);
   };
 }
+
+export namespace Event {
+  export const getEventById = (id: string) => {
+    return callApi<ApiResponse<any>>(`/events/${id}`);
+  };
+}

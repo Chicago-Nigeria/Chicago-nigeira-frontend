@@ -4,12 +4,21 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Upload, MapPin, X, Info, Loader2 } from 'lucide-react';
+import { Upload, MapPin, X, Info, Loader2, Search, CheckCircle, AlertCircle, User } from 'lucide-react';
 import { callApi } from '@/app/libs/helper/callApi';
 import { ApiResponse } from '@/app/types';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { EVENT_CATEGORIES } from '@/app/constants/eventCategories';
+
+interface OrganizerInfo {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  photo?: string;
+  hasStripeConnected: boolean;
+}
 
 // Event Schema
 const eventSchema = z.object({
@@ -91,6 +100,12 @@ export default function AdminCreateEventForm({ onClose, onSuccess }: AdminCreate
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Organizer selection state
+  const [organizerEmail, setOrganizerEmail] = useState('');
+  const [selectedOrganizer, setSelectedOrganizer] = useState<OrganizerInfo | null>(null);
+  const [isSearchingOrganizer, setIsSearchingOrganizer] = useState(false);
+  const [organizerError, setOrganizerError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -166,6 +181,46 @@ export default function AdminCreateEventForm({ onClose, onSuccess }: AdminCreate
     };
   }, [previewUrl]);
 
+  // Search for organizer by email
+  const searchOrganizer = async () => {
+    if (!organizerEmail.trim()) {
+      setOrganizerError('Please enter an email address');
+      return;
+    }
+
+    setIsSearchingOrganizer(true);
+    setOrganizerError(null);
+
+    try {
+      const { data, error } = await callApi<ApiResponse<OrganizerInfo>>(
+        `/admin/users/search?email=${encodeURIComponent(organizerEmail.trim().toLowerCase())}`,
+        'GET'
+      );
+
+      if (error) {
+        setOrganizerError(error.message || 'User not found');
+        setSelectedOrganizer(null);
+        return;
+      }
+
+      if (data?.data) {
+        setSelectedOrganizer(data.data);
+        setOrganizerError(null);
+      }
+    } catch (err: any) {
+      setOrganizerError(err.message || 'Failed to search for user');
+      setSelectedOrganizer(null);
+    } finally {
+      setIsSearchingOrganizer(false);
+    }
+  };
+
+  const clearOrganizer = () => {
+    setSelectedOrganizer(null);
+    setOrganizerEmail('');
+    setOrganizerError(null);
+  };
+
   const onSubmit = async (data: EventFormData) => {
     try {
       setIsSubmitting(true);
@@ -192,6 +247,11 @@ export default function AdminCreateEventForm({ onClose, onSuccess }: AdminCreate
 
       if (selectedImage) {
         formData.append('coverImage', selectedImage);
+      }
+
+      // Include organizer ID if one is selected
+      if (selectedOrganizer) {
+        formData.append('organizerId', selectedOrganizer.id);
       }
 
       // Use admin endpoint - events created by admin go live immediately
@@ -234,6 +294,107 @@ export default function AdminCreateEventForm({ onClose, onSuccess }: AdminCreate
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
+          {/* Organizer Assignment */}
+          <section className="space-y-4">
+            <h3 className="text-base font-semibold text-gray-900">Event Organizer</h3>
+            <p className="text-sm text-gray-500">Assign this event to a user who will manage it and receive ticket revenue.</p>
+
+            {!selectedOrganizer ? (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="email"
+                      value={organizerEmail}
+                      onChange={(e) => {
+                        setOrganizerEmail(e.target.value);
+                        setOrganizerError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          searchOrganizer();
+                        }
+                      }}
+                      placeholder="Enter organizer's email address"
+                      className="w-full pl-10 pr-3 py-2.5 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={searchOrganizer}
+                    disabled={isSearchingOrganizer}
+                    className="px-4 py-2.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition flex items-center gap-2"
+                  >
+                    {isSearchingOrganizer ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
+                    Search
+                  </button>
+                </div>
+
+                {organizerError && (
+                  <div className="flex items-center gap-2 text-sm text-red-600">
+                    <AlertCircle className="w-4 h-4" />
+                    {organizerError}
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-500">
+                  Leave empty to assign yourself as the organizer
+                </p>
+              </div>
+            ) : (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                      {selectedOrganizer.photo ? (
+                        <Image
+                          src={selectedOrganizer.photo}
+                          alt={selectedOrganizer.firstName}
+                          width={40}
+                          height={40}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-5 h-5 text-emerald-600" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">
+                          {selectedOrganizer.firstName} {selectedOrganizer.lastName}
+                        </p>
+                        <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <p className="text-sm text-gray-600">{selectedOrganizer.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearOrganizer}
+                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {!isFree && !selectedOrganizer.hasStripeConnected && (
+                  <div className="mt-3 flex items-start gap-2 text-sm text-amber-700 bg-amber-50 p-2 rounded">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>
+                      This user hasn't connected Stripe. Payouts will need to be processed manually.
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
           {/* Event Details */}
           <section className="space-y-4">
             <h3 className="text-base font-semibold text-gray-900">Event Details</h3>

@@ -17,6 +17,8 @@ import {
   Ticket,
   X,
   Plus,
+  Download,
+  Loader2,
 } from 'lucide-react';
 import AdminCreateEventForm from './components/AdminCreateEventForm';
 import { toast } from 'sonner';
@@ -94,6 +96,7 @@ export default function EventsPage() {
   const [totalServiceFees, setTotalServiceFees] = useState(0);
   const [loadingServiceFees, setLoadingServiceFees] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isExportingCSV, setIsExportingCSV] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -183,6 +186,25 @@ export default function EventsPage() {
     }
   };
 
+  // Check if event is in the past
+  const isEventPast = (event: Event) => {
+    const eventDate = new Date(event.endDate || event.startDate);
+    const eventEndTime = event.endTime || event.startTime;
+    if (eventEndTime) {
+      const [hours, minutes] = eventEndTime.split(':');
+      eventDate.setHours(parseInt(hours), parseInt(minutes));
+    }
+    return eventDate < new Date();
+  };
+
+  // Get effective status (check if event is past)
+  const getEffectiveStatus = (event: Event) => {
+    if (isEventPast(event) && event.status !== 'cancelled') {
+      return 'completed';
+    }
+    return event.status;
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'upcoming':
@@ -195,6 +217,50 @@ export default function EventsPage() {
         return 'bg-red-100 text-red-700';
       default:
         return 'bg-yellow-100 text-yellow-700';
+    }
+  };
+
+  const handleExportCSV = async (event: Event) => {
+    setIsExportingCSV(true);
+    try {
+      // Build CSV content based on event type
+      let csvContent = '';
+      const filename = `${event.title.replace(/[^a-z0-9]/gi, '_')}_attendees_${new Date().toISOString().split('T')[0]}.csv`;
+
+      if (event.isFree && event.registrations) {
+        // Free event - registrations
+        csvContent = 'First Name,Last Name,Email,Phone,Status,Registered At\n';
+        event.registrations.forEach(reg => {
+          csvContent += `"${reg.firstName || ''}","${reg.lastName || ''}","${reg.email || ''}","${reg.phone || ''}","${reg.status}","${new Date(reg.registeredAt).toISOString()}"\n`;
+        });
+      } else if (!event.isFree && event.tickets) {
+        // Paid event - tickets
+        csvContent = 'Ticket Code,First Name,Last Name,Email,Quantity,Total Price,Status,Purchased At\n';
+        event.tickets.forEach(ticket => {
+          csvContent += `"${ticket.ticketCode || ''}","${ticket.user.firstName || ''}","${ticket.user.lastName || ''}","${ticket.user.email || ''}",${ticket.quantity},$${ticket.totalPrice.toFixed(2)},"${ticket.status}","${new Date(ticket.purchasedAt).toISOString()}"\n`;
+        });
+      } else {
+        toast.error('No attendee data available to export');
+        setIsExportingCSV(false);
+        return;
+      }
+
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Attendees exported successfully');
+    } catch (error) {
+      toast.error('Failed to export attendees');
+      console.error('Export error:', error);
+    } finally {
+      setIsExportingCSV(false);
     }
   };
 
@@ -237,7 +303,7 @@ export default function EventsPage() {
               </div>
             </div>
             <div className="flex items-center gap-1 mt-2">
-              <span className="text-xs sm:text-sm text-emerald-100">5% of ticket sales</span>
+              <span className="text-xs sm:text-sm text-emerald-100">$5 per ticket sold</span>
             </div>
           </div>
         </div>
@@ -344,10 +410,10 @@ export default function EventsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full ${getStatusBadgeColor(
-                          event.status
+                          getEffectiveStatus(event)
                         )}`}
                       >
-                        {event.status}
+                        {getEffectiveStatus(event)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -504,8 +570,8 @@ export default function EventsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 mt-3">
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadgeColor(event.status)}`}>
-                    {event.status}
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadgeColor(getEffectiveStatus(event))}`}>
+                    {getEffectiveStatus(event)}
                   </span>
                   <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${event.isFree ? 'bg-gray-100 text-gray-700' : 'bg-emerald-100 text-emerald-700'}`}>
                     {event.isFree ? 'Free' : 'Paid'}
@@ -663,10 +729,10 @@ export default function EventsPage() {
                       <div className="mt-1">
                         <span
                           className={`px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full ${getStatusBadgeColor(
-                            showDetailsModal.status
+                            getEffectiveStatus(showDetailsModal)
                           )}`}
                         >
-                          {showDetailsModal.status}
+                          {getEffectiveStatus(showDetailsModal)}
                         </span>
                       </div>
                     </div>
@@ -738,14 +804,13 @@ export default function EventsPage() {
                       {showDetailsModal.totalTickets && ` / ${showDetailsModal.totalTickets}`}
                     </p>
                   </div>
-                  {!showDetailsModal.isFree && showDetailsModal.ticketPrice && (
+                  {!showDetailsModal.isFree && (
                     <div className="bg-emerald-50 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-emerald-700">Service Fee (5%)</p>
+                      <p className="text-sm font-medium text-emerald-700">Service Fee ($5/ticket)</p>
                       <p className="text-lg font-semibold text-emerald-900 mt-1">
                         $
                         {(
-                          (showDetailsModal.ticketPrice || 0) *
-                          0.05 *
+                          5 *
                           (showDetailsModal.tickets?.length || showDetailsModal._count?.tickets || 0)
                         ).toFixed(2)}
                       </p>
@@ -921,6 +986,22 @@ export default function EventsPage() {
               >
                 Close
               </button>
+              {/* Export CSV Button */}
+              {((showDetailsModal.isFree && showDetailsModal.registrations && showDetailsModal.registrations.length > 0) ||
+                (!showDetailsModal.isFree && showDetailsModal.tickets && showDetailsModal.tickets.length > 0)) && (
+                <button
+                  onClick={() => handleExportCSV(showDetailsModal)}
+                  disabled={isExportingCSV}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isExportingCSV ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  Export CSV
+                </button>
+              )}
               {showDetailsModal.status === 'pending' && (
                 <button
                   onClick={() => {

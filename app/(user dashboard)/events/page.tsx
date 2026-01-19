@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Search, ChevronDown } from "lucide-react";
+import { Plus, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import EventsList from "./event-components/EventsList";
 import EventStatusTabs from "./event-components/eventStatusTabs";
@@ -98,7 +98,7 @@ export default function Events() {
 
 			{/* My Events - Mobile View (above search and events) */}
 			<div className="lg:hidden mt-6">
-				<EventStatus user={user} />
+				<EventStatus user={user} isCollapsible={true} />
 			</div>
 
 			{/* Search and Filters - Full Width Above Both Columns */}
@@ -191,8 +191,9 @@ export default function Events() {
 	);
 }
 
-function EventStatus({ user }: { user: any }) {
+function EventStatus({ user, isCollapsible = false }: { user: any; isCollapsible?: boolean }) {
 	const { openSignIn } = useAuthModal((state) => state.actions);
+	const [isCollapsed, setIsCollapsed] = useState(true);
 
 	// Fetch attending events
 	const { data: attendingData, refetch: refetchAttending } = useQuery({
@@ -262,20 +263,40 @@ function EventStatus({ user }: { user: any }) {
 		});
 	};
 
+	// Check if event is in the past
+	const isEventPast = (event: any) => {
+		const eventDate = new Date(event.endDate || event.startDate);
+		const eventEndTime = event.endTime || event.startTime;
+		if (eventEndTime) {
+			const [hours, minutes] = eventEndTime.split(':');
+			eventDate.setHours(parseInt(hours), parseInt(minutes));
+		}
+		return eventDate < new Date();
+	};
+
 	const attendingEvents = (attendingData || []).map((event: any) => ({
+		id: event.id,
 		eventName: event.title,
 		numberOfAttendees: (event._count?.registrations || 0) + (event._count?.tickets || 0),
 		date: formatDate(event.startDate),
 	}));
 
-	const hostedEvents = (hostedData || []).map((event: any) => ({
-		eventName: event.title,
-		eventStatus: event.status as "pending" | "approved" | "rejected" | "upcoming" | "active" | "ongoing" | "completed",
-		numberOfAttendees: (event._count?.registrations || 0) + (event._count?.tickets || 0),
-		daysOfWeek: formatDay(event.startDate),
-	}));
+	const hostedEvents = (hostedData || []).map((event: any) => {
+		// Determine the actual status - if event is past, mark as completed
+		const isPast = isEventPast(event);
+		const effectiveStatus = isPast ? "completed" : event.status;
+
+		return {
+			id: event.id,
+			eventName: event.title,
+			eventStatus: effectiveStatus as "pending" | "approved" | "rejected" | "upcoming" | "active" | "ongoing" | "completed",
+			numberOfAttendees: (event._count?.registrations || 0) + (event._count?.tickets || 0),
+			daysOfWeek: formatDay(event.startDate),
+		};
+	});
 
 	const pastEvents = (pastData || []).map((event: any) => ({
+		id: event.id,
 		eventName: event.title,
 		numberOfAttendees: (event._count?.registrations || 0) + (event._count?.tickets || 0),
 		date: formatDate(event.startDate),
@@ -285,58 +306,90 @@ function EventStatus({ user }: { user: any }) {
 	if (!user) {
 		return (
 			<section className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-				<h2 className="mb-4 text-base font-semibold text-gray-900">My Events</h2>
-				<div className="text-center py-12 px-4">
-					<div className="mb-4">
-						<svg
-							className="w-16 h-16 mx-auto text-gray-300"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={1.5}
-								d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-							/>
-						</svg>
-					</div>
-					<h3 className="text-base font-semibold text-gray-900 mb-2">
-						Sign in to view your events
-					</h3>
-					<p className="text-sm text-gray-600 mb-6">
-						Track events you're attending, hosting, and your event history
-					</p>
+				{isCollapsible ? (
 					<button
-						onClick={() => openSignIn("view your events")}
-						className="inline-block px-5 py-2.5 bg-[var(--primary-color)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors"
+						onClick={() => setIsCollapsed(!isCollapsed)}
+						className="w-full flex items-center justify-between text-base font-semibold text-gray-900 mb-4"
 					>
-						Sign In
+						<span>My Events</span>
+						{isCollapsed ? (
+							<ChevronDown className="w-5 h-5 text-gray-500" />
+						) : (
+							<ChevronUp className="w-5 h-5 text-gray-500" />
+						)}
 					</button>
-				</div>
+				) : (
+					<h2 className="mb-4 text-base font-semibold text-gray-900">My Events</h2>
+				)}
+				{(!isCollapsible || !isCollapsed) && (
+					<div className="text-center py-12 px-4">
+						<div className="mb-4">
+							<svg
+								className="w-16 h-16 mx-auto text-gray-300"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={1.5}
+									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+								/>
+							</svg>
+						</div>
+						<h3 className="text-base font-semibold text-gray-900 mb-2">
+							Sign in to view your events
+						</h3>
+						<p className="text-sm text-gray-600 mb-6">
+							Track events you're attending, hosting, and your event history
+						</p>
+						<button
+							onClick={() => openSignIn("view your events")}
+							className="inline-block px-5 py-2.5 bg-[var(--primary-color)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors"
+						>
+							Sign In
+						</button>
+					</div>
+				)}
 			</section>
 		);
 	}
 
 	return (
 		<section className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-			<h2 className="mb-4 text-base font-semibold text-gray-900">My Events</h2>
-			<EventStatusTabs
-				attendingEvents={attendingEvents}
-				pastEvents={pastEvents}
-				hostedEvents={hostedEvents}
-				onTabChange={(tab) => {
-					// Refetch data when tab changes
-					if (tab === "attending") {
-						refetchAttending();
-					} else if (tab === "hosted") {
-						refetchHosted();
-					} else if (tab === "past") {
-						refetchPast();
-					}
-				}}
-			/>
+			{isCollapsible ? (
+				<button
+					onClick={() => setIsCollapsed(!isCollapsed)}
+					className="w-full flex items-center justify-between text-base font-semibold text-gray-900 mb-4"
+				>
+					<span>My Events</span>
+					{isCollapsed ? (
+						<ChevronDown className="w-5 h-5 text-gray-500" />
+					) : (
+						<ChevronUp className="w-5 h-5 text-gray-500" />
+					)}
+				</button>
+			) : (
+				<h2 className="mb-4 text-base font-semibold text-gray-900">My Events</h2>
+			)}
+			{(!isCollapsible || !isCollapsed) && (
+				<EventStatusTabs
+					attendingEvents={attendingEvents}
+					pastEvents={pastEvents}
+					hostedEvents={hostedEvents}
+					onTabChange={(tab) => {
+						// Refetch data when tab changes
+						if (tab === "attending") {
+							refetchAttending();
+						} else if (tab === "hosted") {
+							refetchHosted();
+						} else if (tab === "past") {
+							refetchPast();
+						}
+					}}
+				/>
+			)}
 		</section>
 	);
 }

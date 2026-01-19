@@ -32,7 +32,7 @@ interface EventsListProps {
 }
 
 export default function EventsList({ selectedCategory, searchQuery }: EventsListProps) {
-	const { data, isLoading, error } = useQuery({
+	const { data, isLoading, isFetching, error } = useQuery({
 		queryKey: ["events"],
 		queryFn: async () => {
 			const response = await callApi<ApiResponse<any[]>>(
@@ -44,9 +44,11 @@ export default function EventsList({ selectedCategory, searchQuery }: EventsList
 			}
 			return response.data?.data || [];
 		},
-		staleTime: 0, // Always consider data stale for fresh data
-		refetchOnMount: true, // Refetch when component mounts
+		staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+		gcTime: 30 * 60 * 1000, // Cache for 30 minutes
+		refetchOnMount: true, // Refetch when component mounts (in background if data exists)
 		refetchOnWindowFocus: true, // Refetch when window regains focus
+		refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes in background
 	});
 
 	// Filter events by category and search query
@@ -63,7 +65,8 @@ export default function EventsList({ selectedCategory, searchQuery }: EventsList
 		return matchesCategory && matchesSearch && isApproved;
 	}) || [];
 
-	if (isLoading) {
+	// Only show skeleton on initial load (no cached data)
+	if (isLoading && !data) {
 		return (
 			<>
 				{[...Array(3)].map((_, i) => (

@@ -1,8 +1,20 @@
 "use client"
-import { Calendar, UsersRound } from "lucide-react";
+import { Calendar, UsersRound, ChevronRight } from "lucide-react";
 import type { AttendingEvent, HostedEvent, PastEvent } from "@/app/types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function EventStatusHostedCard({ events }: { events?: HostedEvent[] }) {
+	const router = useRouter();
+
+	const handleHostedEventClick = (eventId: string | undefined) => {
+		if (eventId) {
+			router.push(`/events/my-events?eventId=${eventId}`);
+		} else {
+			router.push('/events/my-events');
+		}
+	};
+
 	if (!events || events.length === 0) {
 		return (
 			<div className="text-center py-8">
@@ -13,11 +25,12 @@ export function EventStatusHostedCard({ events }: { events?: HostedEvent[] }) {
 	}
 	return (
 		<>
-			{events.map(
-				({ eventStatus, eventName, daysOfWeek, numberOfAttendees }, i) => (
+			{events.slice(0, 3).map(
+				({ id, eventStatus, eventName, daysOfWeek, numberOfAttendees }, i) => (
 					<div
-						key={i}
-						className="p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors space-y-2"
+						key={id || i}
+						onClick={() => handleHostedEventClick(id)}
+						className="p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors space-y-2 cursor-pointer"
 					>
 						<div className="flex items-start justify-between gap-2">
 							<h3 className="font-medium text-sm text-gray-900">{eventName}</h3>
@@ -64,6 +77,15 @@ export function EventStatusHostedCard({ events }: { events?: HostedEvent[] }) {
 					</div>
 				),
 			)}
+
+			{/* View All Link */}
+			<Link
+				href="/events/my-events"
+				className="flex items-center justify-center gap-1 mt-3 py-2 text-sm font-medium text-[var(--primary-color)] hover:bg-[var(--primary-color)]/5 rounded-lg transition"
+			>
+				Manage Events & Attendees
+				<ChevronRight size={16} />
+			</Link>
 		</>
 	);
 }
@@ -73,6 +95,8 @@ export function EventStatusAttendedCard({
 }: {
 	events?: AttendingEvent[];
 }) {
+	const router = useRouter();
+
 	if (!events || events.length === 0) {
 		return (
 			<div className="text-center py-8">
@@ -83,11 +107,12 @@ export function EventStatusAttendedCard({
 	}
 	return (
 		<>
-			{events.map(({ date, eventName }, i) => {
+			{events.map(({ id, date, eventName }, i) => {
 				return (
 					<div
-						key={i}
-						className="p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors space-y-2"
+						key={id || i}
+						onClick={() => id && router.push(`/events/${id}`)}
+						className="p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors space-y-2 cursor-pointer"
 					>
 						<h3 className="font-medium text-sm text-gray-900">{eventName}</h3>
 						<p className="text-xs text-gray-600 flex items-center gap-1">
@@ -100,6 +125,8 @@ export function EventStatusAttendedCard({
 	);
 }
 export function EventStatusPastCard({ events }: { events?: PastEvent[] }) {
+	const router = useRouter();
+
 	if (!events || events.length === 0) {
 		return (
 			<div className="text-center py-8">
@@ -110,10 +137,11 @@ export function EventStatusPastCard({ events }: { events?: PastEvent[] }) {
 	}
 	return (
 		<>
-			{events.map(({ eventName, date, numberOfAttendees }, i) => (
+			{events.map(({ id, eventName, date, numberOfAttendees }, i) => (
 				<div
-					key={i}
-					className="p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors space-y-2"
+					key={id || i}
+					onClick={() => id && router.push(`/events/${id}`)}
+					className="p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors space-y-2 cursor-pointer"
 				>
 					<h3 className="font-medium text-sm text-gray-900">{eventName}</h3>
 					<div className="flex items-center justify-between text-xs text-gray-600">

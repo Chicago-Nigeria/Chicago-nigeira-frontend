@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Lock, Shield, User as UserIcon } from "lucide-react";
+import { Bell, CreditCard, Lock, Shield, User as UserIcon } from "lucide-react";
 import ProfileSettings from "./components/ProfileSettings";
+import PaymentsSettings from "./components/PaymentsSettings";
 // import NotificationSettings from "./components/NotificationSettings";
 // import PrivacySettings from "./components/PrivacySettings";
 
-type TabType = "profile" | "account" | "notifications" | "privacy";
+type TabType = "profile" | "payments" | "account" | "notifications" | "privacy";
 
 const tabs = [
 	{ id: "profile" as TabType, label: "Profile", icon: UserIcon },
+	{ id: "payments" as TabType, label: "Payments", icon: CreditCard },
 	{ id: "account" as TabType, label: "Account", icon: Shield },
 	{ id: "notifications" as TabType, label: "Notifications", icon: Bell },
 	{ id: "privacy" as TabType, label: "Privacy", icon: Lock },
@@ -56,6 +58,7 @@ export default function SettingsPage() {
 				{/* Tab Content */}
 				<div className="p-6">
 					{activeTab === "profile" && <ProfileSettings />}
+					{activeTab === "payments" && <PaymentsSettings />}
 					{activeTab === "account" && (
 						<div className="text-center py-12 text-gray-500">
 							<Shield className="w-12 h-12 mx-auto mb-3 text-gray-400" />

@@ -3,28 +3,72 @@
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ShareButton({ title }: { title: string }) {
-	const shareProduct = async () => {
-		if (navigator.share) {
+interface ShareButtonProps {
+	title: string;
+	url?: string;
+	className?: string;
+}
+
+export default function ShareButton({ title, url, className }: ShareButtonProps) {
+	const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+
+	// Check if device is mobile
+	const isMobile = () => {
+		if (typeof window === 'undefined') return false;
+		return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+	};
+
+	const copyToClipboard = async () => {
+		try {
+			await navigator.clipboard.writeText(shareUrl);
+			toast.success("Link copied to clipboard!");
+			return true;
+		} catch (error) {
+			// Fallback for older browsers
+			try {
+				const textArea = document.createElement('textarea');
+				textArea.value = shareUrl;
+				textArea.style.position = 'fixed';
+				textArea.style.left = '-999999px';
+				document.body.appendChild(textArea);
+				textArea.select();
+				document.execCommand('copy');
+				document.body.removeChild(textArea);
+				toast.success("Link copied to clipboard!");
+				return true;
+			} catch (fallbackError) {
+				console.error("Failed to copy:", fallbackError);
+				toast.error("Failed to copy link");
+				return false;
+			}
+		}
+	};
+
+	const shareContent = async () => {
+		// Only use native share on mobile devices
+		if (isMobile() && navigator.share) {
 			try {
 				await navigator.share({
 					title,
-					text: "I found this interesting page.",
-					url: window.location.href, // current page link
+					text: "Check out this event!",
+					url: shareUrl,
 				});
-				toast.success("Content shared successfully");
-			} catch (error) {
-				console.error("Error sharing:", error);
+				toast.success("Shared successfully!");
+			} catch (error: any) {
+				// User cancelled or share failed - fall back to clipboard
+				if (error.name !== 'AbortError') {
+					await copyToClipboard();
+				}
 			}
 		} else {
-			await navigator.clipboard.writeText(window.location.href);
-			toast.success("URL Copied to clipboard successfully!")
+			// Desktop: always copy to clipboard
+			await copyToClipboard();
 		}
 	};
 	return (
 		<button
-			onClick={shareProduct}
-			className="bg-white w-10 h-10 rounded-full grid place-items-center cursor-pointer">
+			onClick={shareContent}
+			className={className || "bg-white w-10 h-10 rounded-full grid place-items-center cursor-pointer"}>
 			<Share2 className="stroke-1 stroke-gray-600" />
 		</button>
 	);

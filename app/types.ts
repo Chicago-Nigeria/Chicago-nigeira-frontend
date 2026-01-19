@@ -4,6 +4,7 @@ export type FormValues = {
   password: string;
 };
 export type Event = {
+  id?: string;
   eventName: string;
   eventStatus?: EventStatus;
   numberOfAttendees: number;
@@ -11,11 +12,11 @@ export type Event = {
   date: string;
 };
 export type HostedEvent = Omit<Event, "date">;
-export type PastEvent = Omit<Event, "eventStatus" | "daysOfWeek">;
+export type PastEvent = Omit<Event, "eventStatus" | "daysOfWeek"> & { id?: string };
 export type AttendingEvent = Omit<
   Event,
   "eventStatus" | "daysOfWeek" | "numberOfAttending"
->;
+> & { id?: string };
 export type EventCardData = {
   id?: string;
   imageSrc: string;

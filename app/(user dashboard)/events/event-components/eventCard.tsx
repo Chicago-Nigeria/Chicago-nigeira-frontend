@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Calendar, Clock, MapPin, Infinity, User } from "lucide-react";
 import { useState } from "react";
 import TicketRegistrationModal from "./TicketRegistrationModal";
 import { useAuthGuard } from "@/app/hooks/useAuthGuard";
+import ShareButton from "../../components/shareButton";
 
 interface EventCardProps {
 	event: any; // Will be properly typed once backend response is confirmed
@@ -78,27 +80,53 @@ export default function EventCard({ event }: EventCardProps) {
 	// Get banner image or use placeholder
 	const bannerImage = event.coverImage || '/image-placeholder.webp';
 
+	// Get share URL
+	const shareUrl = typeof window !== 'undefined'
+		? `${window.location.origin}/events/${event.id}`
+		: `/events/${event.id}`;
+
+	// Check if event is in the past
+	const isEventPast = () => {
+		const eventDate = new Date(event.endDate || event.startDate);
+		const eventEndTime = event.endTime || event.startTime;
+		if (eventEndTime) {
+			const [hours, minutes] = eventEndTime.split(':');
+			eventDate.setHours(parseInt(hours), parseInt(minutes));
+		}
+		return eventDate < new Date();
+	};
+
+	const isPastEvent = isEventPast();
+
 	return (
 		<>
 			<div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
 				{/* Banner Image Section */}
 				<div className="relative h-52 w-full">
-					<Image
-						src={bannerImage}
-						alt={event.title}
-						fill
-						className="object-cover"
-						sizes="(max-width: 768px) 100vw, 600px"
-					/>
+					<Link href={`/events/${event.id}`}>
+						<Image
+							src={bannerImage}
+							alt={event.title}
+							fill
+							className="object-cover cursor-pointer"
+							sizes="(max-width: 768px) 100vw, 600px"
+						/>
+					</Link>
 					{/* Category Tag */}
-					<span className="absolute top-3 right-3 bg-[var(--primary-color)] text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md">
+					<span className="absolute top-3 left-3 bg-[var(--primary-color)] text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md">
 						{event.category || 'General'}
 					</span>
+					{/* Share Button */}
+					<div className="absolute top-3 right-3">
+						<ShareButton title={event.title} url={shareUrl} />
+					</div>
 				</div>
 
 				{/* Content Section */}
 				<div className="p-5 space-y-3">
-					<h2 className="text-lg font-semibold text-gray-900 line-clamp-2">{event.title}</h2>
+					<Link href={`/events/${event.id}`}>
+						<h2 className="text-lg font-semibold text-gray-900 line-clamp-2 hover:text-[var(--primary-color)] transition-colors cursor-pointer">{event.title}</h2>
+					</Link>
 					<p className="text-sm text-gray-600 leading-relaxed line-clamp-2">{event.description}</p>
 
 					{/* Event Details - Row Layout with Wrapping */}
@@ -166,12 +194,18 @@ export default function EventCard({ event }: EventCardProps) {
 							</div>
 
 							{/* Right - Get Ticket Button (Centered) */}
-							<button
-								onClick={handleGetTicket}
-								className="px-6 py-2.5 bg-[var(--primary-color)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors shadow-sm self-center"
-							>
-								Get Ticket
-							</button>
+							{isPastEvent ? (
+								<span className="px-6 py-2.5 bg-gray-200 text-gray-500 text-sm font-semibold rounded-lg self-center cursor-not-allowed">
+									Registration Closed
+								</span>
+							) : (
+								<button
+									onClick={handleGetTicket}
+									className="px-6 py-2.5 bg-[var(--primary-color)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors shadow-sm self-center"
+								>
+									Get Ticket
+								</button>
+							)}
 						</div>
 					</div>
 				</div>
