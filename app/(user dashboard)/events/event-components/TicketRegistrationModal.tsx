@@ -269,7 +269,7 @@ export default function TicketRegistrationModal({
 	}
 
 	return (
-		<div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm pb-[70px] sm:pb-0">
+		<div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm sm:pb-0">
 			<div
 				className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[calc(100vh-90px)] sm:max-h-[90vh] flex flex-col"
 				onClick={(e) => e.stopPropagation()}
