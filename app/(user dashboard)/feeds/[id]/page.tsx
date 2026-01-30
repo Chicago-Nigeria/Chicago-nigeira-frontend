@@ -25,6 +25,7 @@ import {
   useLikePost,
   useSavePost,
   useDeletePost,
+  useCommunityStats,
 } from "@/app/hooks/usePost";
 import {
   useComments,
@@ -50,6 +51,7 @@ export default function PostPage() {
   const { data: postData, isLoading: postLoading } = usePost(postId);
   const { data: commentsData, isLoading: commentsLoading } =
     useComments(postId);
+  const { data: communityStats } = useCommunityStats();
 
   const likeMutation = useLikePost();
   const saveMutation = useSavePost();
@@ -485,82 +487,89 @@ export default function PostPage() {
         </div>
 
         {/* Sidebar */}
-        <aside className="sticky top-24 h-fit hidden lg:block space-y-4">
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-            <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
-              <span>Community Stats</span>
-              <ChartNoAxesColumnIncreasing className="w-5 h-5 text-[var(--primary-color)]" />
-            </h2>
-            <div className="space-y-3 community-stats-items">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <p className="text-sm text-gray-600">Active Members</p>
-                <p className="text-sm font-semibold text-gray-900">2,847</p>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <p className="text-sm text-gray-600">Posts Today</p>
-                <p className="text-sm font-semibold text-gray-900">127</p>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <p className="text-sm text-gray-600">Events This Week</p>
-                <p className="text-sm font-semibold text-gray-900">8</p>
-              </div>
+       <aside className="sticky top-24 h-fit hidden lg:block space-y-4">
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+            <span>Community Stats</span>
+            <ChartNoAxesColumnIncreasing className="w-5 h-5 text-[var(--primary-color)]" />
+          </h2>
+          <div className="space-y-3 community-stats-items">
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Active Members</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {communityStats?.activeMembers?.toLocaleString() ?? '-'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Posts Today</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {communityStats?.postsToday?.toLocaleString() ?? '-'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <p className="text-sm text-gray-600">Events This Week</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {communityStats?.eventsThisWeek?.toLocaleString() ?? '-'}
+              </p>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-900 mb-4">
-              Popular Categories
-            </h2>
-            <div className="space-y-3 community-stats-items">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <p className="text-sm text-gray-600">Fashion</p>
-                <p className="text-sm font-semibold text-gray-900">28</p>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <p className="text-sm text-gray-600">Services</p>
-                <p className="text-sm font-semibold text-gray-900">34</p>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <p className="text-sm text-gray-600">Food</p>
-                <p className="text-sm font-semibold text-gray-900">23</p>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <p className="text-sm text-gray-600">Housing</p>
-                <p className="text-sm font-semibold text-gray-900">8</p>
-              </div>
+        </div>
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          {/* Popular Categories - Commented out for now
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
+            Popular Categories
+          </h2>
+          <div className="space-y-3 community-stats-items">
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Fashion</p>
+              <p className="text-sm font-semibold text-gray-900">28</p>
             </div>
-
-            <hr className="border-gray-200 my-4" />
-
-            <div>
-              <h2 className="text-base font-semibold text-gray-900 mb-3">
-                Quick Links
-              </h2>
-              <div className="space-y-2">
-                <Link
-                  href="/events"
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
-                >
-                  <MapPin className="w-4 h-4 text-[var(--primary-color)]" />
-                  <span>Find Local Events</span>
-                </Link>
-                <Link
-                  href="/groups"
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
-                >
-                  <UsersRound className="w-4 h-4 text-[var(--primary-color)]" />
-                  <span>Join Groups</span>
-                </Link>
-                <Link
-                  href="/marketplace"
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
-                >
-                  <BriefcaseConveyorBelt className="w-4 h-4 text-[var(--primary-color)]" />
-                  <span>Browse Marketplace</span>
-                </Link>
-              </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Services</p>
+              <p className="text-sm font-semibold text-gray-900">34</p>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Food</p>
+              <p className="text-sm font-semibold text-gray-900">23</p>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <p className="text-sm text-gray-600">Housing</p>
+              <p className="text-sm font-semibold text-gray-900">8</p>
             </div>
           </div>
-        </aside>
+          <hr className="border-gray-200 my-4" />
+          */}
+
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 mb-3">
+              Quick Links
+            </h2>
+            <div className="space-y-2">
+              <Link
+                href="/events"
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
+              >
+                <MapPin className="w-4 h-4 text-[var(--primary-color)]" />
+                <span>Find Local Events</span>
+              </Link>
+              <Link
+                href="/groups"
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
+              >
+                <UsersRound className="w-4 h-4 text-[var(--primary-color)]" />
+                <span>Join Groups</span>
+              </Link>
+              <Link
+                href="/marketplace"
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
+              >
+                <BriefcaseConveyorBelt className="w-4 h-4 text-[var(--primary-color)]" />
+                <span>Browse Marketplace</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </aside>
       </section>
 
       {/* Media Viewer */}
