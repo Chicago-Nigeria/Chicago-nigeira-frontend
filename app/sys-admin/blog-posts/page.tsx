@@ -14,8 +14,10 @@ import {
   MessageCircle,
   Bookmark,
   FileText,
+  Edit3,
 } from 'lucide-react';
 import CreateBlogPostForm from './components/CreateBlogPostForm';
+import EditBlogPostForm from './components/EditBlogPostForm';
 import { toast } from 'sonner';
 import { Loader } from '@/app/components/loader';
 
@@ -30,6 +32,7 @@ export default function BlogPostsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState<IPost | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState<IPost | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState<IPost | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -284,6 +287,16 @@ export default function BlogPostsPage() {
                                 </button>
                                 <button
                                   onClick={() => {
+                                    setShowEditModal(post);
+                                    setShowDropdown(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                  Edit Post
+                                </button>
+                                <button
+                                  onClick={() => {
                                     setShowDeleteModal(post);
                                     setShowDropdown(null);
                                   }}
@@ -381,6 +394,13 @@ export default function BlogPostsPage() {
                           >
                             <Eye className="h-4 w-4" />
                             View Post
+                          </button>
+                          <button
+                            onClick={() => { setShowEditModal(post); setShowDropdown(null); }}
+                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                            Edit
                           </button>
                           <button
                             onClick={() => { setShowDeleteModal(post); setShowDropdown(null); }}
@@ -573,6 +593,15 @@ export default function BlogPostsPage() {
               </button>
               <button
                 onClick={() => {
+                  setShowEditModal(showDetailsModal);
+                }}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 font-medium flex items-center gap-2"
+              >
+                <Edit3 className="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                onClick={() => {
                   setShowDeleteModal(showDetailsModal);
                 }}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium flex items-center gap-2"
@@ -591,6 +620,18 @@ export default function BlogPostsPage() {
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             fetchPosts();
+          }}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <EditBlogPostForm
+          post={showEditModal}
+          onClose={() => setShowEditModal(null)}
+          onSuccess={() => {
+            fetchPosts();
+            setShowDetailsModal(null);
           }}
         />
       )}

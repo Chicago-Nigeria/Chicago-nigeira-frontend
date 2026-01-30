@@ -88,7 +88,7 @@ export default function FollowersModal({
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="relative w-full max-w-md max-h-[80vh] bg-white rounded-2xl shadow-xl overflow-hidden"
+            className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
           >
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
@@ -101,8 +101,8 @@ export default function FollowersModal({
               </button>
             </div>
 
-            {/* Content */}
-            <div className="overflow-y-auto max-h-[calc(80vh-60px)]">
+            {/* Content - Mobile shows ~5 items (360px), desktop shows more */}
+            <div className="overflow-y-auto max-h-[360px] sm:max-h-[calc(80vh-60px)]">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-gray-400" />

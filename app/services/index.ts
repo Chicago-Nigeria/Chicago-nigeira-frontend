@@ -220,6 +220,10 @@ export namespace AdminBlog {
     return callApi<ApiResponse<IPost>>(`/admin/posts`, "POST", data);
   };
 
+  export const updatePost = (id: string, data: { content: string }) => {
+    return callApi<ApiResponse<IPost>>(`/admin/posts/${id}`, "PUT", data);
+  };
+
   export const deletePost = (id: string) => {
     return callApi<ApiResponse<void>>(`/admin/posts/${id}`, "DELETE");
   };
