@@ -12,6 +12,7 @@ import CommentModal from '@/app/components/modals/CommentModal';
 import MediaViewer from '@/app/components/modals/MediaViewer';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { renderPostContent } from '@/app/utils/parsePostContent';
 
 interface BlogPostCardProps {
   post: IPost;
@@ -44,7 +45,9 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
   const handleComment = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setShowCommentModal(true);
+    requireAuth(() => {
+      setShowCommentModal(true);
+    }, 'comment on this post');
   };
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -121,7 +124,7 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
           {/* Content */}
           <article className="mt-4 text-sm text-gray-700 leading-relaxed">
             <Link href={`/feeds/${post.id}`}>
-              <p className="whitespace-pre-wrap">{post.content}</p>
+              <p className="whitespace-pre-wrap break-words overflow-hidden">{renderPostContent(post.content)}</p>
             </Link>
 
             {/* Images */}

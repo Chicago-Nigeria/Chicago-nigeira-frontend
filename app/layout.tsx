@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import AuthProvider from "./components/provider/authProvider";
 import QueryProvider from "./components/provider/queryProvider";
 import AuthModal from "./components/modals/AuthModal";
+import CookieConsent from "./components/CookieConsent";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,6 +36,7 @@ export default function RootLayout({
             {children}
             <Toaster position="top-center" richColors={true} />
             <AuthModal />
+            <CookieConsent />
           </AuthProvider>
         </QueryProvider>
       </body>

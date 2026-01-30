@@ -903,9 +903,9 @@ export default function Index() {
                 <p className="font-semibold">Email:</p>
                 <Link
                   className="text-gray-400"
-                  href={"mailto:contact@chicagonigerians.com"}
+                  href={"mailto:support@chicagonigerians.com"}
                 >
-                  contact@chicagonigerians.com
+                  support@chicagonigerians.com
                 </Link>
               </li>
               <li className="">
@@ -935,7 +935,7 @@ export default function Index() {
           <div className="space-x-4">
             <Link href={"/privacy-policy"}>Privacy Policy</Link>
             <Link href={"/terms-of-service"}>Terms of Service</Link>
-            <Link href={"/cookies"}>Cookie Policy</Link>
+            <Link href={"/cookie-policy"}>Cookie Policy</Link>
           </div>
         </motion.section>
       </motion.footer>

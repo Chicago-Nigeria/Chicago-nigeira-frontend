@@ -37,6 +37,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { IComment } from "@/app/types";
 import MediaViewer from "@/app/components/modals/MediaViewer";
+import { renderPostContent } from "@/app/utils/parsePostContent";
 
 export default function PostPage() {
   const params = useParams();
@@ -224,7 +225,7 @@ export default function PostPage() {
 
             {/* Content */}
             <div className="px-4 sm:px-5 pb-4">
-              <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
+              <p className="text-gray-800 whitespace-pre-wrap break-words overflow-hidden">{renderPostContent(post.content)}</p>
             </div>
 
             {/* Images - Matching PostCard styling */}
@@ -471,8 +472,8 @@ export default function PostPage() {
                             </motion.button>
                           )}
                         </div>
-                        <p className="text-sm text-gray-700 mt-1">
-                          {comment.content}
+                        <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap break-words overflow-hidden">
+                          {renderPostContent(comment.content)}
                         </p>
                       </div>
                     </motion.div>

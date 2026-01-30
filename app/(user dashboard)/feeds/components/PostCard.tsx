@@ -1,8 +1,8 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
   MessageCircle,
@@ -13,29 +13,46 @@ import {
   Play,
   UserPlus,
   Loader2,
+  Trash2,
+  Edit3,
 } from "lucide-react";
 import { IPost } from "@/app/types";
-import { useLikePost, useSavePost } from "@/app/hooks/usePost";
+import { useLikePost, useSavePost, useDeletePost, useEditPost } from "@/app/hooks/usePost";
 import { useAuthGuard } from "@/app/hooks/useAuthGuard";
 import { useToggleFollow } from "@/app/hooks/useFollow";
 import { useSession } from "@/app/store/useSession";
 import CommentModal from "@/app/components/modals/CommentModal";
 import MediaViewer from "@/app/components/modals/MediaViewer";
+import DeletePostModal from "@/app/components/modals/DeletePostModal";
+import EditPostModal from "@/app/components/modals/EditPostModal";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { renderPostContent, isWithinEditTimeframe } from "@/app/utils/parsePostContent";
 
 interface PostCardProps {
   post: IPost;
   showFollowButton?: boolean;
 }
 
+const MAX_LINES = 5;
+const LINE_HEIGHT = 1.5; // matches leading-relaxed
+
 export default function PostCard({ post, showFollowButton = true }: PostCardProps) {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [showMediaViewer, setShowMediaViewer] = useState(false);
   const [mediaViewerIndex, setMediaViewerIndex] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isTextTruncated, setIsTextTruncated] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const { requireAuth } = useAuthGuard();
   const likeMutation = useLikePost();
   const saveMutation = useSavePost();
+  const deleteMutation = useDeletePost();
+  const editMutation = useEditPost();
   const { toggle: toggleFollow, isPending: followPending } = useToggleFollow();
   const { user } = useSession((state) => state);
 
@@ -45,6 +62,34 @@ export default function PostCard({ post, showFollowButton = true }: PostCardProp
   const isOwnPost = currentUserId === post.author.id;
   // Check if already following this author (from server data)
   const isFollowing = (post.author as any).isFollowing || false;
+  // Check if post is editable (within 1 hour)
+  const canEdit = isOwnPost && isWithinEditTimeframe(post.createdAt);
+
+  // Check if text needs truncation
+  useEffect(() => {
+    if (contentRef.current) {
+      const lineHeight = parseFloat(getComputedStyle(contentRef.current).lineHeight);
+      const maxHeight = lineHeight * MAX_LINES;
+      setIsTextTruncated(contentRef.current.scrollHeight > maxHeight + 2);
+    }
+  }, [post.content]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleFollow = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -84,7 +129,9 @@ export default function PostCard({ post, showFollowButton = true }: PostCardProp
   const handleComment = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setShowCommentModal(true);
+    requireAuth(() => {
+      setShowCommentModal(true);
+    }, "comment on this post");
   };
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -104,6 +151,35 @@ export default function PostCard({ post, showFollowButton = true }: PostCardProp
   const openMediaViewer = (index: number) => {
     setMediaViewerIndex(index);
     setShowMediaViewer(true);
+  };
+
+  const handleDeleteClick = () => {
+    setShowDropdown(false);
+    setShowDeleteModal(true);
+  };
+
+  const handleEditClick = () => {
+    setShowDropdown(false);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteMutation.mutate(post.id, {
+      onSuccess: () => {
+        setShowDeleteModal(false);
+      },
+    });
+  };
+
+  const handleEditConfirm = (content: string) => {
+    editMutation.mutate(
+      { postId: post.id, content },
+      {
+        onSuccess: () => {
+          setShowEditModal(false);
+        },
+      }
+    );
   };
 
   return (
@@ -169,17 +245,83 @@ export default function PostCard({ post, showFollowButton = true }: PostCardProp
             <p className="text-[11px] mt-0.5 text-gray-400 flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+              {canEdit && (
+                <span className="text-emerald-600 ml-1">(editable)</span>
+              )}
             </p>
           </div>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-            <MoreVertical className="w-4 h-4 text-gray-400" />
-          </button>
+
+          {/* More Options Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+            >
+              <MoreVertical className="w-4 h-4 text-gray-400" />
+            </button>
+
+            <AnimatePresence>
+              {showDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-20"
+                >
+                  {isOwnPost && canEdit && (
+                    <button
+                      onClick={handleEditClick}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Edit Post
+                    </button>
+                  )}
+                  {isOwnPost && (
+                    <button
+                      onClick={handleDeleteClick}
+                      className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete Post
+                    </button>
+                  )}
+                  {!isOwnPost && (
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        toast.info("Report feature coming soon");
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                    >
+                      Report Post
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Content */}
         <article className="mt-4 text-sm text-gray-700 leading-relaxed">
-          <Link href={`/feeds/${post.id}`}>
-            <p className="whitespace-pre-wrap">{post.content}</p>
+          <Link href={`/feeds/${post.id}`} className="block">
+            <div
+              ref={contentRef}
+              className={`whitespace-pre-wrap break-words overflow-hidden ${
+                isTextTruncated ? "line-clamp-5" : ""
+              }`}
+            >
+              {renderPostContent(post.content)}
+            </div>
+
+            {/* See More */}
+            {isTextTruncated && (
+              <span className="mt-1 text-[var(--primary-color)] hover:underline font-medium inline-block">
+                See more
+              </span>
+            )}
           </Link>
 
           {/* Images */}
@@ -326,6 +468,23 @@ export default function PostCard({ post, showFollowButton = true }: PostCardProp
         onClose={() => setShowMediaViewer(false)}
         media={mediaItems}
         initialIndex={mediaViewerIndex}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeletePostModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        isPending={deleteMutation.isPending}
+      />
+
+      {/* Edit Post Modal */}
+      <EditPostModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onConfirm={handleEditConfirm}
+        isPending={editMutation.isPending}
+        post={post}
       />
     </>
   );

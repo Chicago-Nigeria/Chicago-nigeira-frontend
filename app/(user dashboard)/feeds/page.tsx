@@ -162,7 +162,7 @@ export default function Feed() {
             className={`whitespace-nowrap shrink-0 flex items-center gap-1.5 ${activeFilter === 'blogs' ? 'text-white bg-[var(--primary-color)]' : ''}`}
           >
             <FileText className="w-3.5 h-3.5" />
-            Blog Posts
+            Community Updates
           </button>
           <button className="whitespace-nowrap shrink-0">My Networks</button>
           <button className="ml-auto px-3 py-1.5 whitespace-nowrap shrink-0">
@@ -170,8 +170,8 @@ export default function Feed() {
           </button>
         </div>
 
-        {/* Create Post Form - Only show for 'all' filter */}
-        {activeFilter === 'all' && <CreatePostForm />}
+        {/* Create Post Form - Only show for 'all' filter and logged in users */}
+        {activeFilter === 'all' && user && <CreatePostForm />}
 
         {/* New Posts Banner */}
         {newPostsCount > 0 && (
@@ -198,7 +198,7 @@ export default function Feed() {
             <div className="text-center py-12 text-gray-500 bg-white rounded-2xl border border-gray-200 shadow-sm">
               <p className="font-medium">
                 {activeFilter === 'blogs'
-                  ? 'No blog posts yet'
+                  ? 'No community updates yet'
                   : activeFilter === 'following'
                   ? 'No posts from people you follow'
                   : 'No posts yet'}

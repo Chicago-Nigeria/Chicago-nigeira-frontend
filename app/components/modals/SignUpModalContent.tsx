@@ -283,6 +283,28 @@ export default function SignUpModalContent({
 						<FormFieldErrorMessage error={errors.phone} />
 					</div>
 
+					{/* Terms Agreement */}
+					<p className="text-xs text-gray-500 text-center mb-4">
+						By signing up, you agree to our{" "}
+						<a
+							href="/terms-of-service"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-[var(--primary-color)] hover:underline"
+						>
+							Terms of Service
+						</a>{" "}
+						and{" "}
+						<a
+							href="/privacy-policy"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-[var(--primary-color)] hover:underline"
+						>
+							Privacy Policy
+						</a>
+					</p>
+
 					{/* Next Button */}
 					<button
 						type="button"

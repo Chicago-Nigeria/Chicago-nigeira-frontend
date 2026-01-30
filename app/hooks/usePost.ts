@@ -131,47 +131,59 @@ export const useCreatePost = () => {
 export const useLikePost = () => {
   const queryClient = useQueryClient();
 
+  // Helper to update posts in a query data structure
+  const updatePostsData = (old: unknown, postId: string) => {
+    if (!old) return old;
+    const oldData = old as { pages: Array<{ data: { data: IPost[] } }> };
+    if (!oldData.pages) return old;
+    return {
+      ...oldData,
+      pages: oldData.pages.map((page) => ({
+        ...page,
+        data: {
+          ...page.data,
+          data: page.data?.data?.map((post: IPost) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  isLiked: !post.isLiked,
+                  _count: {
+                    ...post._count,
+                    likes: post.isLiked
+                      ? post._count.likes - 1
+                      : post._count.likes + 1,
+                  },
+                }
+              : post
+          ),
+        },
+      })),
+    };
+  };
+
   return useMutation({
     mutationFn: async (postId: string) => {
       return await Post.toggleLike(postId);
     },
     onMutate: async (postId) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      // Cancel outgoing refetches for all posts queries
+      await queryClient.cancelQueries({ queryKey: ["posts"], exact: false });
       await queryClient.cancelQueries({ queryKey: ["post", postId] });
+      await queryClient.cancelQueries({ queryKey: ["userPosts"], exact: false });
 
-      // Snapshot previous value
-      const previousPosts = queryClient.getQueryData(["posts"]);
+      // Snapshot previous values for all posts queries
+      const previousPostsAll = queryClient.getQueryData(["posts", "all"]);
+      const previousPostsFollowing = queryClient.getQueryData(["posts", "following"]);
+      const previousPostsBlogs = queryClient.getQueryData(["posts", "blogs"]);
       const previousPost = queryClient.getQueryData(["post", postId]);
 
-      // Optimistically update posts list
-      queryClient.setQueryData(["posts"], (old: unknown) => {
-        if (!old) return old;
-        const oldData = old as { pages: Array<{ data: { data: IPost[] } }> };
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            data: {
-              ...page.data,
-              data: page.data?.data?.map((post: IPost) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      isLiked: !post.isLiked,
-                      _count: {
-                        ...post._count,
-                        likes: post.isLiked
-                          ? post._count.likes - 1
-                          : post._count.likes + 1,
-                      },
-                    }
-                  : post
-              ),
-            },
-          })),
-        };
-      });
+      // Optimistically update all posts lists
+      queryClient.setQueryData(["posts", "all"], (old: unknown) => updatePostsData(old, postId));
+      queryClient.setQueryData(["posts", "following"], (old: unknown) => updatePostsData(old, postId));
+      queryClient.setQueryData(["posts", "blogs"], (old: unknown) => updatePostsData(old, postId));
+
+      // Also update userPosts queries (profile posts)
+      queryClient.setQueriesData({ queryKey: ["userPosts"], exact: false }, (old: unknown) => updatePostsData(old, postId));
 
       // Optimistically update single post
       queryClient.setQueryData(["post", postId], (old: unknown) => {
@@ -197,12 +209,18 @@ export const useLikePost = () => {
         };
       });
 
-      return { previousPosts, previousPost };
+      return { previousPostsAll, previousPostsFollowing, previousPostsBlogs, previousPost };
     },
     onError: (_err, postId, context) => {
       // Rollback on error
-      if (context?.previousPosts) {
-        queryClient.setQueryData(["posts"], context.previousPosts);
+      if (context?.previousPostsAll) {
+        queryClient.setQueryData(["posts", "all"], context.previousPostsAll);
+      }
+      if (context?.previousPostsFollowing) {
+        queryClient.setQueryData(["posts", "following"], context.previousPostsFollowing);
+      }
+      if (context?.previousPostsBlogs) {
+        queryClient.setQueryData(["posts", "blogs"], context.previousPostsBlogs);
       }
       if (context?.previousPost) {
         queryClient.setQueryData(["post", postId], context.previousPost);
@@ -212,41 +230,86 @@ export const useLikePost = () => {
   });
 };
 
-// Save post mutation
+// Save post mutation with optimistic update
 export const useSavePost = () => {
   const queryClient = useQueryClient();
+
+  // Helper to update posts in a query data structure
+  const updatePostsData = (old: unknown, postId: string) => {
+    if (!old) return old;
+    const oldData = old as { pages: Array<{ data: { data: IPost[] } }> };
+    if (!oldData.pages) return old;
+    return {
+      ...oldData,
+      pages: oldData.pages.map((page) => ({
+        ...page,
+        data: {
+          ...page.data,
+          data: page.data?.data?.map((post: IPost) =>
+            post.id === postId ? { ...post, isSaved: !post.isSaved } : post
+          ),
+        },
+      })),
+    };
+  };
 
   return useMutation({
     mutationFn: async (postId: string) => {
       return await Post.toggleSave(postId);
     },
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      // Cancel outgoing refetches for all posts queries
+      await queryClient.cancelQueries({ queryKey: ["posts"], exact: false });
+      await queryClient.cancelQueries({ queryKey: ["post", postId] });
+      await queryClient.cancelQueries({ queryKey: ["userPosts"], exact: false });
 
-      const previousPosts = queryClient.getQueryData(["posts"]);
+      // Snapshot previous values for all posts queries
+      const previousPostsAll = queryClient.getQueryData(["posts", "all"]);
+      const previousPostsFollowing = queryClient.getQueryData(["posts", "following"]);
+      const previousPostsBlogs = queryClient.getQueryData(["posts", "blogs"]);
+      const previousPost = queryClient.getQueryData(["post", postId]);
 
-      queryClient.setQueryData(["posts"], (old: unknown) => {
+      // Optimistically update all posts lists
+      queryClient.setQueryData(["posts", "all"], (old: unknown) => updatePostsData(old, postId));
+      queryClient.setQueryData(["posts", "following"], (old: unknown) => updatePostsData(old, postId));
+      queryClient.setQueryData(["posts", "blogs"], (old: unknown) => updatePostsData(old, postId));
+
+      // Also update userPosts queries (profile posts)
+      queryClient.setQueriesData({ queryKey: ["userPosts"], exact: false }, (old: unknown) => updatePostsData(old, postId));
+
+      // Optimistically update single post
+      queryClient.setQueryData(["post", postId], (old: unknown) => {
         if (!old) return old;
-        const oldData = old as { pages: Array<{ data: { data: IPost[] } }> };
+        const oldData = old as { data: { data: IPost } };
+        if (!oldData?.data?.data) return old;
+        const post = oldData.data.data;
         return {
           ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
+          data: {
+            ...oldData.data,
             data: {
-              ...page.data,
-              data: page.data?.data?.map((post: IPost) =>
-                post.id === postId ? { ...post, isSaved: !post.isSaved } : post
-              ),
+              ...post,
+              isSaved: !post.isSaved,
             },
-          })),
+          },
         };
       });
 
-      return { previousPosts };
+      return { previousPostsAll, previousPostsFollowing, previousPostsBlogs, previousPost };
     },
-    onError: (_err, _postId, context) => {
-      if (context?.previousPosts) {
-        queryClient.setQueryData(["posts"], context.previousPosts);
+    onError: (_err, postId, context) => {
+      // Rollback on error
+      if (context?.previousPostsAll) {
+        queryClient.setQueryData(["posts", "all"], context.previousPostsAll);
+      }
+      if (context?.previousPostsFollowing) {
+        queryClient.setQueryData(["posts", "following"], context.previousPostsFollowing);
+      }
+      if (context?.previousPostsBlogs) {
+        queryClient.setQueryData(["posts", "blogs"], context.previousPostsBlogs);
+      }
+      if (context?.previousPost) {
+        queryClient.setQueryData(["post", postId], context.previousPost);
       }
       toast.error("Failed to save post");
     },
@@ -264,9 +327,34 @@ export const useDeletePost = () => {
     onSuccess: () => {
       toast.success("Post deleted");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
     },
     onError: () => {
       toast.error("Failed to delete post");
+    },
+  });
+};
+
+// Edit post mutation
+export const useEditPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      return await Post.updatePost(postId, { content });
+    },
+    onSuccess: (result, { postId }) => {
+      if (result.error) {
+        toast.error(result.error.message || "Failed to edit post");
+        return;
+      }
+      toast.success("Post updated");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to edit post");
     },
   });
 };

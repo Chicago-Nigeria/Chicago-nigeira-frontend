@@ -9,6 +9,7 @@ import { useSession } from "@/app/store/useSession";
 import { useAuthGuard } from "@/app/hooks/useAuthGuard";
 import { IPost, IComment } from "@/app/types";
 import { formatDistanceToNow } from "date-fns";
+import { renderPostContent } from "@/app/utils/parsePostContent";
 
 interface CommentModalProps {
   isOpen: boolean;
@@ -174,8 +175,8 @@ export default function CommentModal({ isOpen, onClose, post }: CommentModalProp
                 </div>
 
                 {/* Post Content */}
-                <p className="text-sm text-gray-800 mt-2 line-clamp-2 whitespace-pre-wrap">
-                  {post.content}
+                <p className="text-sm text-gray-800 mt-2 line-clamp-2 whitespace-pre-wrap break-words overflow-hidden">
+                  {renderPostContent(post.content)}
                 </p>
 
                 {/* Post Media Preview - Compact view */}
@@ -309,7 +310,7 @@ export default function CommentModal({ isOpen, onClose, post }: CommentModalProp
                               </motion.button>
                             )}
                           </div>
-                          <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{comment.content}</p>
+                          <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap break-words overflow-hidden">{renderPostContent(comment.content)}</p>
                         </div>
                       </div>
                     </motion.div>
