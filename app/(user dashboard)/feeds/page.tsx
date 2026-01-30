@@ -1,359 +1,332 @@
+"use client";
+import { useEffect, useState, useMemo } from "react";
+import { useInView } from "react-intersection-observer";
 import {
-	ArrowRight,
-	BriefcaseConveyorBelt,
-	Calendar,
-	Camera,
-	ChartNoAxesColumnIncreasing,
-	Clock,
-	EllipsisVertical,
-	Filter,
-	MapPin,
-	MessageCircle,
-	SendIcon,
-	Share2Icon,
-	UsersRound,
-	Video,
+  BriefcaseConveyorBelt,
+  ChartNoAxesColumnIncreasing,
+  Filter,
+  MapPin,
+  UsersRound,
+  Loader2,
+  FileText,
+  Users,
 } from "lucide-react";
-import Image from "next/image";
-import LikePost from "../components/likePostContent";
-import SavePost from "../components/saveButton";
 import Link from "next/link";
-import { VerifiedIcon } from "@/app/components/icons";
-import PageInConstruction from "../components/construction";
+import { usePosts, usePromotedContent, useFeaturedBlogPosts, useCommunityStats, FeedFilter } from "@/app/hooks/usePost";
+import PostCard from "./components/PostCard";
+import PromotedEventCard from "./components/PromotedEventCard";
+import BlogPostCard from "./components/BlogPostCard";
+import CreatePostForm from "./components/CreatePostForm";
+import NewPostsBanner from "./components/NewPostsBanner";
+import { IPromotedContent, IPost } from "@/app/types";
+import { useSession } from "@/app/store/useSession";
+import { useAuthModal } from "@/app/store/useAuthModal";
 
-type PostItem = {
-	postType: "sponsored-post" | "post";
-	author: string;
-	authorImage: string;
-	postText: string;
-	postImage?: string;
-	jobDescription: string;
-	location: string;
-	time: string;
-	jobCategory: string;
-	likeCount: number;
-	commentCount: number;
-	shareCount: number;
-	verified: boolean;
-};
-const postItems: PostItem[] = [
-	{
-		postType: "sponsored-post",
-		author: "Adebayo Ogundimu",
-		authorImage: "/reviewer-image-1.webp",
-		postText:
-			"Excited to announce that our fintech startup just secured Series A funding! 🚀Looking to hire Nigerian talent in Chicago. DM me if you're interested in joining our team. #NigerianTech #ChicagoStartups",
-		postImage: "/post-img-1.webp",
-		jobDescription: "Tech Entrepreneur",
-		location: "Chicago",
-		time: "2h",
-		jobCategory: "Business",
-		likeCount: 8,
-		commentCount: 27,
-		shareCount: 8,
-		verified: false,
-	},
-	{
-		postType: "post",
-		author: "Adebayo Ogundimu",
-		authorImage: "/reviewer-image-1.webp",
-		postText:
-			"Excited to announce that our fintech startup just secured Series A funding! 🚀Looking to hire Nigerian talent in Chicago. DM me if you're interested in joining our team. #NigerianTech #ChicagoStartups",
-		postImage: "/post-img-1.webp",
-		jobDescription: "Tech Entrepreneur",
-		location: "Chicago",
-		time: "2h",
-		jobCategory: "Business",
-		likeCount: 8,
-		commentCount: 27,
-		shareCount: 8,
-		verified: true,
-	},
-	{
-		postType: "post",
-		author: "Adebayo Ogundimu",
-		authorImage: "/reviewer-image-1.webp",
-		postText:
-			"Excited to announce that our fintech startup just secured Series A funding! 🚀Looking to hire Nigerian talent in Chicago. DM me if you're interested in joining our team. #NigerianTech #ChicagoStartups",
+// Show promoted content or blog post every 4 posts
+const POSTS_BETWEEN_INTERLEAVED = 4;
 
-		jobDescription: "Tech Entrepreneur",
-		location: "Chicago",
-		time: "2h",
-		jobCategory: "Business",
-		likeCount: 8,
-		commentCount: 27,
-		shareCount: 8,
-		verified: true,
-	},
-];
 export default function Feed() {
-	return (
-		<PageInConstruction/>
-		// <section className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-12">
-		// 	<section className="space-y-8 pt-4">
-		// 		<div className="flex overflow-auto gap-2 items-center bg-white p-8 md:rounded-lg space-y-4 user-page-top button-hover-effect">
-		// 			<button className="text-white bg-[var(--primary-color)]">All Posts</button>
-		// 			<button>Following</button>
-		// 			<button>My Networks</button>
-		// 			<button className="ml-auto px-4 py-2">
-		// 				{" "}
-		// 				<Filter className="w-4 h-4" /> Filters
-		// 			</button>
-		// 		</div>
-		// 		<div className="md:p-8 py-2 bg-white md:rounded-xl">
-		// 			<div className="flex">
-		// 				<div className="w-14 h-14 rounded-full bg-gray-100 mr-4 ">
-		// 					{" "}
-		// 					<Image
-		// 						className="object-cover"
-		// 						src="/reviewer-image-1.webp"
-		// 						height={56}
-		// 						width={56}
-		// 						alt="user"
-		// 					/>
-		// 				</div>
-		// 				<form action="" className="bg-red flex-1">
-		// 					<label htmlFor="post" className="hidden">
-		// 						Post
-		// 					</label>
-		// 					<textarea
-		// 						className="min-h-17 w-full resize-none bg-gray-100 p-2 rounded-xl text-sm "
-		// 						draggable="false"
-		// 						name="post"
-		// 						id="post"
-		// 						placeholder="What's on your mind? Share with the community"></textarea>
-		// 				</form>
-		// 			</div>
+  const [activeFilter, setActiveFilter] = useState<FeedFilter>('all');
+  const { user } = useSession((state) => state);
+  const { openSignIn } = useAuthModal((state) => state.actions);
 
-		// 			<div className="overflow-x-auto mt-12 border-t border-t-gray-200 flex gap-2 items-center bg-white py-4 space-y-4 user-page-top button-hover-effect">
-		// 				<button>
-		// 					<Camera className="w-5 h-5" />
-		// 					<span>Photo</span>
-		// 				</button>
-		// 				<button>
-		// 					<Video className="w-5 h-5" /> <span>Video</span>
-		// 				</button>
-		// 				<button>
-		// 					<Calendar className="w-5 h-5" /> <span>Event</span>
-		// 				</button>
-		// 				<button className="ml-auto px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg">
-		// 					<SendIcon className="w-5 h-5" /> <span>Post</span>
-		// 				</button>
-		// 			</div>
-		// 		</div>
-		// 		<div className="space-y-4">
-		// 			{postItems.map(
-		// 				(
-		// 					{
-		// 						postType,
-		// 						author,
-		// 						authorImage,
-		// 						postText,
-		// 						postImage,
-		// 						jobDescription,
-		// 						location,
-		// 						time,
-		// 						jobCategory,
-		// 						likeCount,
-		// 						commentCount,
-		// 						shareCount,
-		// 						verified,
-		// 					},
-		// 					index
-		// 				) => {
-		// 					if (postType === "sponsored-post") {
-		// 						return (
-		// 							<div key={index} className="md:p-8 py-6 px-4 md:rounded-lg bg-white">
-		// 								<div className="flex">
-		// 									<div className="w-14 h-14 rounded-full bg-gray-100 mr-4 ">
-		// 										{" "}
-		// 										<Image
-		// 											className="object-cover"
-		// 											src={authorImage}
-		// 											height={56}
-		// 											width={56}
-		// 											alt="user"
-		// 										/>
-		// 									</div>
-		// 									<div>
-		// 										{verified ? (
-		// 											<div className="flex items-center gap-0.5">
-		// 												<VerifiedIcon />
-		// 											</div>
-		// 										) : (
-		// 											<p>{author}</p>
-		// 										)}
+  const {
+    posts,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    newPostsCount,
+    loadNewPosts,
+  } = usePosts(activeFilter);
 
-		// 										<p className="text-sm text-gray-400">Events</p>
-		// 									</div>
-		// 									<p className="ml-auto text-xs h-fit px-2 py-0.5  border rounded-md cursor-pointer">
-		// 										sponsored
-		// 									</p>
-		// 								</div>
-		// 								<article className="mt-8 text-sm">
-		// 									<p>{postText}</p>
-		// 									{postImage && (
-		// 										<div className="md:min-h-80 max-h-80 w-full bg-gray-200 mt-4 rounded-xl overflow-clip">
-		// 											<Image
-		// 												src={postImage ?? "/"}
-		// 												alt="post-image"
-		// 												height={589}
-		// 												width={285}
-		// 												className="w-full object-cover object-center"
-		// 											/>
-		// 										</div>
-		// 									)}
-		// 								</article>
+  const { data: promotedContent = [] } = usePromotedContent();
+  const { data: featuredBlogPosts = [] } = useFeaturedBlogPosts();
+  const { data: communityStats } = useCommunityStats();
 
-		// 								<Link
-		// 									href={"#"}
-		// 									className="mt-8 py-2 rounded-lg w-full bg-[var(--primary-color)] text-white flex gap-2 items-center justify-center">
-		// 									Get Tickets <ArrowRight className="w-4 h-4 mt-1" />
-		// 								</Link>
-		// 							</div>
-		// 						);
-		// 					} else {
-		// 						return (
-		// 							<div key={index} className="md:p-8 py-6 px-4 md:rounded-lg bg-white">
-		// 								<div className="flex">
-		// 									<div className="w-14 h-14 rounded-full bg-gray-100 mr-4 ">
-		// 										{" "}
-		// 										<Image
-		// 											className="object-cover"
-		// 											src={authorImage}
-		// 											height={56}
-		// 											width={56}
-		// 											alt="user"
-		// 										/>
-		// 									</div>
-		// 									<div>
-		// 										{verified ? (
-		// 											<div className="flex items-center gap-0.5">
-		// 												<p>{author}</p>
-		// 												<VerifiedIcon />
-		// 											</div>
-		// 										) : (
-		// 											<p>{author}</p>
-		// 										)}
-		// 										<p className="text-sm space-x-1 text-gray-400 font-light">
-		// 											<span>{jobDescription}</span> <span>{location}</span>
-		// 										</p>
-		// 										<p className="text-xs mt-1 text-gray-400 font-light flex items-center gap-2">
-		// 											<span className="inline-flex items-center gap-0.5">
-		// 												<Clock className="w-4 h-4" /> {time}
-		// 											</span>{" "}
-		// 											<span className="py-1 px-2 rounded-md border border-gray-400 text-black">
-		// 												{jobCategory}
-		// 											</span>
-		// 										</p>
-		// 									</div>
-		// 									<div className="ml-auto p-4 cursor-pointer">
-		// 										<EllipsisVertical className="w-4 h-4 " />
-		// 									</div>
-		// 								</div>
-		// 								<article className="mt-8 text-sm">
-		// 									<p>{postText}</p>
-		// 									{postImage && (
-		// 										<div className="md:min-h-80 max-h-80 w-full bg-gray-200 mt-4 rounded-xl overflow-clip">
-		// 											<Image
-		// 												src={postImage}
-		// 												alt="post-image"
-		// 												height={589}
-		// 												width={285}
-		// 												className="w-full object-cover object-center"
-		// 											/>
-		// 										</div>
-		// 									)}
-		// 								</article>
+  const { ref, inView } = useInView();
 
-		// 								<div className=" mt-8 border-t border-t-gray-200 flex gap-4 items-center bg-white py-4 space-y-4  text-gray-400 feed-post-actions font-light text-sm">
-		// 									<div>
-		// 										<LikePost className="w-5 h-5" />
-		// 										<span>{likeCount}</span>
-		// 									</div>
-		// 									<div>
-		// 										<button>
-		// 											<MessageCircle className="w-4 h-4" />
-		// 										</button>{" "}
-		// 										<span>{commentCount}</span>
-		// 									</div>
-		// 									<div>
-		// 										<button>
-		// 											<Share2Icon className="w-4 h-4" />
-		// 										</button>{" "}
-		// 										<span>{shareCount}</span>
-		// 									</div>
-		// 									<SavePost className="ml-auto" />
-		// 								</div>
-		// 							</div>
-		// 						);
-		// 					}
-		// 				}
-		// 			)}
-		// 		</div>
-		// 	</section>
-		// 	<section className="space-y-8 sticky top-0 h-screen pt-4 hidden md:block">
-		// 		<div className=" bg-white p-4 rounded-lg space-y-4">
-		// 			<h2 className="flex items-center gap-1">
-		// 				<span>Community stats</span>{" "}
-		// 				<ChartNoAxesColumnIncreasing className="w-6 h-6 text-[var(--primary-color)]" />
-		// 			</h2>
-		// 			<div className="space-y-3 community-stats-items">
-		// 				<div>
-		// 					<p>Active Members</p>
-		// 					<p>2,847</p>
-		// 				</div>
-		// 				<div>
-		// 					<p>Posts today</p>
-		// 					<p>127</p>
-		// 				</div>
-		// 				<div>
-		// 					<p>Events This Week</p>
-		// 					<p>8</p>
-		// 				</div>
-		// 			</div>
-		// 		</div>
-		// 		<div className=" bg-white p-4 rounded-lg space-y-4">
-		// 			<h2>Popular Categories</h2>
-		// 			<div className="space-y-3 community-stats-items">
-		// 				<div>
-		// 					<p>Fashion</p>
-		// 					<p>28</p>
-		// 				</div>
-		// 				<div>
-		// 					<p>Services</p>
-		// 					<p>34</p>
-		// 				</div>
-		// 				<div>
-		// 					<p>Food </p>
-		// 					<p>23</p>
-		// 				</div>
-		// 				<div>
-		// 					<p>Housing </p>
-		// 					<p>8</p>
-		// 				</div>
-		// 			</div>
-		// 			<hr className="border border-gray-200 my-4" />
+  // Infinite scroll trigger
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-		// 			<div className="space-y-3 ">
-		// 				<h2>Quick Links</h2>
-		// 				<div className="ml-4 space-y-3 community-stats-items quick-actions">
-		// 					<div>
-		// 						<MapPin className="w-4 h-4" />
-		// 						<p>Find Local Events</p>
-		// 					</div>
-		// 					<div>
-		// 						<UsersRound className="w-4 h-4" />
-		// 						<p>Join Groups</p>
-		// 					</div>
-		// 					<div>
-		// 						<BriefcaseConveyorBelt className="w-4 h-4" />
-		// 						<p>Browse Jobs</p>
-		// 					</div>
-		// 				</div>
-		// 			</div>
-		// 		</div>
-		// 	</section>
-		// </section>
-	);
+  // Interleave posts with promoted content and blog posts
+  // Algorithm:
+  // - Shows interleaved content every 4 posts (or after all posts if fewer than 4)
+  // - Alternates between promoted events and blog posts
+  // - Shows on both "all" and "following" tabs (but not "blogs" tab)
+  const interleavedFeed = useMemo(() => {
+    if (activeFilter === 'blogs') {
+      // Don't show interleaved content in blogs filter - it's already showing blog posts
+      return posts.map(post => ({ type: 'post' as const, data: post }));
+    }
+
+    const result: Array<{ type: 'post' | 'promoted' | 'blog'; data: IPost | IPromotedContent }> = [];
+    let promotedIndex = 0;
+    let blogIndex = 0;
+    let interleavedCount = 0; // Tracks which type to show next (even = promoted, odd = blog)
+
+    // Get the post IDs that are regular posts (to exclude from blog interleaving)
+    const postIds = new Set(posts.map(p => p.id));
+    // Filter blog posts to exclude ones already in the feed
+    const availableBlogPosts = featuredBlogPosts.filter(bp => !postIds.has(bp.id));
+
+    // Helper to get next interleaved content
+    const getNextInterleavedContent = () => {
+      // Alternate between promoted and blog posts
+      if (interleavedCount % 2 === 0) {
+        // Try promoted first
+        if (promotedContent[promotedIndex]) {
+          interleavedCount++;
+          return { type: 'promoted' as const, data: promotedContent[promotedIndex++] };
+        }
+        // Fall back to blog if no promoted
+        if (availableBlogPosts[blogIndex]) {
+          interleavedCount++;
+          return { type: 'blog' as const, data: availableBlogPosts[blogIndex++] };
+        }
+      } else {
+        // Try blog first
+        if (availableBlogPosts[blogIndex]) {
+          interleavedCount++;
+          return { type: 'blog' as const, data: availableBlogPosts[blogIndex++] };
+        }
+        // Fall back to promoted if no blog
+        if (promotedContent[promotedIndex]) {
+          interleavedCount++;
+          return { type: 'promoted' as const, data: promotedContent[promotedIndex++] };
+        }
+      }
+      return null;
+    };
+
+    // If we have posts, interleave content every POSTS_BETWEEN_INTERLEAVED posts
+    if (posts.length > 0) {
+      posts.forEach((post, i) => {
+        result.push({ type: 'post', data: post });
+
+        // Insert interleaved content every POSTS_BETWEEN_INTERLEAVED posts
+        if ((i + 1) % POSTS_BETWEEN_INTERLEAVED === 0) {
+          const interleaved = getNextInterleavedContent();
+          if (interleaved) {
+            result.push(interleaved);
+          }
+        }
+      });
+
+      // If we have fewer than POSTS_BETWEEN_INTERLEAVED posts but have interleaved content,
+      // show one at the end
+      if (posts.length < POSTS_BETWEEN_INTERLEAVED && posts.length > 0) {
+        const interleaved = getNextInterleavedContent();
+        if (interleaved) {
+          result.push(interleaved);
+        }
+      }
+    }
+
+    return result;
+  }, [posts, promotedContent, featuredBlogPosts, activeFilter]);
+
+  const handleFilterChange = (filter: FeedFilter) => {
+    // Check auth for 'following' filter
+    if (filter === 'following' && !user) {
+      openSignIn('view posts from people you follow');
+      return;
+    }
+    setActiveFilter(filter);
+  };
+
+  return (
+    <section className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+      <section className="space-y-4">
+        {/* Filter Tabs */}
+        <div className="flex overflow-x-auto gap-2 items-stretch bg-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-gray-200 shadow-sm user-page-top button-hover-effect scrollbar-hide">
+          <button
+            onClick={() => handleFilterChange('all')}
+            className={`whitespace-nowrap shrink-0 ${activeFilter === 'all' ? 'text-white bg-[var(--primary-color)]' : ''}`}
+          >
+            All Posts
+          </button>
+          <button
+            onClick={() => handleFilterChange('following')}
+            className={`whitespace-nowrap shrink-0 flex items-center gap-1.5 ${activeFilter === 'following' ? 'text-white bg-[var(--primary-color)]' : ''}`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            Following
+          </button>
+          <button
+            onClick={() => handleFilterChange('blogs')}
+            className={`whitespace-nowrap shrink-0 flex items-center gap-1.5 ${activeFilter === 'blogs' ? 'text-white bg-[var(--primary-color)]' : ''}`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Blog Posts
+          </button>
+          <button className="whitespace-nowrap shrink-0">My Networks</button>
+          <button className="ml-auto px-3 py-1.5 whitespace-nowrap shrink-0">
+            <Filter className="w-4 h-4" /> Filters
+          </button>
+        </div>
+
+        {/* Create Post Form - Only show for 'all' filter */}
+        {activeFilter === 'all' && <CreatePostForm />}
+
+        {/* New Posts Banner */}
+        {newPostsCount > 0 && (
+          <NewPostsBanner count={newPostsCount} onLoad={loadNewPosts} />
+        )}
+
+        {/* Posts List with Interleaved Promoted Content */}
+        <div className="space-y-4">
+          {status === "pending" ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--primary-color)]" />
+            </div>
+          ) : status === "error" ? (
+            <div className="text-center py-12 text-gray-500 bg-white rounded-2xl border border-gray-200 shadow-sm">
+              <p>Failed to load posts</p>
+              <button
+                onClick={() => loadNewPosts()}
+                className="mt-2 text-[var(--primary-color)] hover:underline"
+              >
+                Try again
+              </button>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-12 text-gray-500 bg-white rounded-2xl border border-gray-200 shadow-sm">
+              <p className="font-medium">
+                {activeFilter === 'blogs'
+                  ? 'No blog posts yet'
+                  : activeFilter === 'following'
+                  ? 'No posts from people you follow'
+                  : 'No posts yet'}
+              </p>
+              <p className="text-sm mt-1">
+                {activeFilter === 'blogs'
+                  ? 'Check back later for official updates!'
+                  : activeFilter === 'following'
+                  ? 'Follow some people to see their posts here!'
+                  : 'Be the first to share something!'}
+              </p>
+            </div>
+          ) : (
+            interleavedFeed.map((item) => {
+              if (item.type === 'post') {
+                return <PostCard key={`post-${item.data.id}`} post={item.data as IPost} />;
+              } else if (item.type === 'promoted') {
+                return (
+                  <PromotedEventCard
+                    key={`promoted-${(item.data as IPromotedContent).id}`}
+                    promotedContent={item.data as IPromotedContent}
+                  />
+                );
+              } else if (item.type === 'blog') {
+                return (
+                  <BlogPostCard
+                    key={`blog-${(item.data as IPost).id}`}
+                    post={item.data as IPost}
+                  />
+                );
+              }
+              return null;
+            })
+          )}
+
+          {/* Infinite scroll trigger */}
+          <div ref={ref} className="h-10 flex justify-center items-center">
+            {isFetchingNextPage && (
+              <Loader2 className="w-6 h-6 animate-spin text-[var(--primary-color)]" />
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Sidebar */}
+      <aside className="sticky top-24 h-fit hidden lg:block space-y-4">
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+            <span>Community Stats</span>
+            <ChartNoAxesColumnIncreasing className="w-5 h-5 text-[var(--primary-color)]" />
+          </h2>
+          <div className="space-y-3 community-stats-items">
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Active Members</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {communityStats?.activeMembers?.toLocaleString() ?? '-'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Posts Today</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {communityStats?.postsToday?.toLocaleString() ?? '-'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <p className="text-sm text-gray-600">Events This Week</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {communityStats?.eventsThisWeek?.toLocaleString() ?? '-'}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          {/* Popular Categories - Commented out for now
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
+            Popular Categories
+          </h2>
+          <div className="space-y-3 community-stats-items">
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Fashion</p>
+              <p className="text-sm font-semibold text-gray-900">28</p>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Services</p>
+              <p className="text-sm font-semibold text-gray-900">34</p>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Food</p>
+              <p className="text-sm font-semibold text-gray-900">23</p>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <p className="text-sm text-gray-600">Housing</p>
+              <p className="text-sm font-semibold text-gray-900">8</p>
+            </div>
+          </div>
+          <hr className="border-gray-200 my-4" />
+          */}
+
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 mb-3">
+              Quick Links
+            </h2>
+            <div className="space-y-2">
+              <Link
+                href="/events"
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
+              >
+                <MapPin className="w-4 h-4 text-[var(--primary-color)]" />
+                <span>Find Local Events</span>
+              </Link>
+              <Link
+                href="/groups"
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
+              >
+                <UsersRound className="w-4 h-4 text-[var(--primary-color)]" />
+                <span>Join Groups</span>
+              </Link>
+              <Link
+                href="/marketplace"
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600 hover:text-gray-900"
+              >
+                <BriefcaseConveyorBelt className="w-4 h-4 text-[var(--primary-color)]" />
+                <span>Browse Marketplace</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  );
 }

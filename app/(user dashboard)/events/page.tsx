@@ -10,11 +10,11 @@ import { useAuthModal } from "@/app/store/useAuthModal";
 import { useQuery } from "@tanstack/react-query";
 import { callApi } from "@/app/libs/helper/callApi";
 import { ApiResponse } from "@/app/types";
-import { EVENT_CATEGORIES } from "@/app/constants/eventCategories";
+import { EVENT_CATEGORIES, EventCategory } from "@/app/constants/eventCategories";
 
 export default function Events() {
 	const { user } = useSession((state) => state);
-	const [selectedCategory, setSelectedCategory] = useState("All Events");
+	const [selectedCategory, setSelectedCategory] = useState<EventCategory>("All Events");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showDropdown, setShowDropdown] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -361,7 +361,7 @@ function EventStatus({ user, isCollapsible = false }: { user: any; isCollapsible
 			{isCollapsible ? (
 				<button
 					onClick={() => setIsCollapsed(!isCollapsed)}
-					className="w-full flex items-center justify-between text-base font-semibold text-gray-900 mb-4"
+					className={`w-full flex items-center justify-between text-base font-semibold text-gray-900 ${isCollapsed ? '' : 'mb-4'}`}
 				>
 					<span>My Events</span>
 					{isCollapsed ? (

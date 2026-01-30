@@ -34,6 +34,13 @@ export default function ProfileSettings() {
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
+	// Header image state
+	const [uploadingHeader, setUploadingHeader] = useState(false);
+	const [headerImage, setHeaderImage] = useState<string | null>(user?.headerImage || null);
+	const [selectedHeaderFile, setSelectedHeaderFile] = useState<File | null>(null);
+	const [headerPreviewUrl, setHeaderPreviewUrl] = useState<string | null>(null);
+	const headerFileInputRef = useRef<HTMLInputElement>(null);
+
 	const {
 		register,
 		handleSubmit,
@@ -66,19 +73,23 @@ export default function ProfileSettings() {
 				location: user.location || "",
 				bio: user.bio || "",
 			});
-			// Also update profile image
+			// Also update profile images
 			setProfileImage(user.photo || null);
+			setHeaderImage(user.headerImage || null);
 		}
 	}, [user, reset]);
 
-	// Cleanup preview URL on unmount
+	// Cleanup preview URLs on unmount
 	useEffect(() => {
 		return () => {
 			if (previewUrl) {
 				URL.revokeObjectURL(previewUrl);
 			}
+			if (headerPreviewUrl) {
+				URL.revokeObjectURL(headerPreviewUrl);
+			}
 		};
-	}, [previewUrl]);
+	}, [previewUrl, headerPreviewUrl]);
 
 	const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -160,6 +171,87 @@ export default function ProfileSettings() {
 		}
 	};
 
+	// Header image handlers
+	const handleHeaderFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		// Validate file size (max 10MB for header images)
+		if (file.size > 10 * 1024 * 1024) {
+			toast.error("Header image size must be less than 10MB");
+			return;
+		}
+
+		// Validate file type
+		if (!file.type.startsWith("image/")) {
+			toast.error("Please upload an image file (JPG, PNG)");
+			return;
+		}
+
+		// Clean up previous preview URL
+		if (headerPreviewUrl) {
+			URL.revokeObjectURL(headerPreviewUrl);
+		}
+
+		// Create preview URL
+		const preview = URL.createObjectURL(file);
+		setHeaderPreviewUrl(preview);
+		setSelectedHeaderFile(file);
+	};
+
+	const handleHeaderImageUpload = async () => {
+		if (!selectedHeaderFile) return;
+
+		setUploadingHeader(true);
+		const formData = new FormData();
+		formData.append("header", selectedHeaderFile);
+
+		try {
+			const { data, error } = await callApi<ApiResponse<{ headerImage: string }>>(
+				"/users/profile/header",
+				"PUT",
+				formData
+			);
+
+			if (error) throw error;
+
+			if (data?.data?.headerImage) {
+				setHeaderImage(data.data.headerImage);
+				updateUser({ ...user!, headerImage: data.data.headerImage });
+				toast.success("Header image updated successfully");
+
+				// Clear preview and selected file
+				if (headerPreviewUrl) {
+					URL.revokeObjectURL(headerPreviewUrl);
+				}
+				setHeaderPreviewUrl(null);
+				setSelectedHeaderFile(null);
+
+				// Reset file input
+				if (headerFileInputRef.current) {
+					headerFileInputRef.current.value = "";
+				}
+			}
+		} catch (error: any) {
+			toast.error(error?.message || "Failed to upload header image");
+		} finally {
+			setUploadingHeader(false);
+		}
+	};
+
+	const handleCancelHeaderPreview = () => {
+		if (headerPreviewUrl) {
+			URL.revokeObjectURL(headerPreviewUrl);
+		}
+		setHeaderPreviewUrl(null);
+		setSelectedHeaderFile(null);
+
+		// Reset file input
+		if (headerFileInputRef.current) {
+			headerFileInputRef.current.value = "";
+		}
+	};
+
 	const onSubmit = async (formData: ProfileFormData) => {
 		try {
 			const { data, error } = await callApi<ApiResponse<IUser>>(
@@ -182,6 +274,90 @@ export default function ProfileSettings() {
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 			<h2 className="text-lg font-semibold text-gray-900">Profile Settings</h2>
+
+			{/* Header Image */}
+			<div className="space-y-3">
+				<label className="block text-sm font-medium text-gray-900">
+					Cover Image (Optional)
+				</label>
+				<div className="space-y-3">
+					<div className="relative w-full h-32 sm:h-40 rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-600 overflow-hidden">
+						{headerPreviewUrl ? (
+							<Image
+								src={headerPreviewUrl}
+								alt="Header Preview"
+								fill
+								className="object-cover"
+							/>
+						) : headerImage ? (
+							<Image
+								src={headerImage}
+								alt="Header"
+								fill
+								className="object-cover"
+							/>
+						) : null}
+					</div>
+					<div>
+						{!headerPreviewUrl ? (
+							<>
+								<input
+									ref={headerFileInputRef}
+									type="file"
+									accept="image/*"
+									onChange={handleHeaderFileSelect}
+									className="hidden"
+								/>
+								<button
+									type="button"
+									onClick={() => headerFileInputRef.current?.click()}
+									disabled={uploadingHeader}
+									className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<Upload className="w-4 h-4" />
+									{headerImage ? "Change Cover" : "Upload Cover"}
+								</button>
+								<p className="text-xs text-gray-500 mt-1">Recommended: 1500 x 500 pixels (Max 10MB)</p>
+							</>
+						) : (
+							<div className="space-y-2">
+								<p className="text-sm text-gray-600">
+									Cover image selected. Click upload to save.
+								</p>
+								<div className="flex items-center gap-2">
+									<button
+										type="button"
+										onClick={handleHeaderImageUpload}
+										disabled={uploadingHeader}
+										className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[var(--primary-color)] rounded-lg hover:bg-[var(--primary-color)]/90 disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										{uploadingHeader ? (
+											<>
+												<Loader2 className="w-4 h-4 animate-spin" />
+												Uploading...
+											</>
+										) : (
+											<>
+												<Check className="w-4 h-4" />
+												Upload Cover
+											</>
+										)}
+									</button>
+									<button
+										type="button"
+										onClick={handleCancelHeaderPreview}
+										disabled={uploadingHeader}
+										className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										<X className="w-4 h-4" />
+										Cancel
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
 
 			{/* Profile Picture */}
 			<div className="space-y-3">

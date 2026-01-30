@@ -90,6 +90,7 @@ export default function EventsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
   const [showApproveModal, setShowApproveModal] = useState<Event | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<Event | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState<Event | null>(null);
@@ -203,6 +204,40 @@ export default function EventsPage() {
       return 'completed';
     }
     return event.status;
+  };
+
+  const handleDropdownToggle = (eventId: string, event: React.MouseEvent<HTMLButtonElement>) => {
+    if (showDropdown === eventId) {
+      setShowDropdown(null);
+      return;
+    }
+
+    const button = event.currentTarget;
+    const buttonRect = button.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+    const dropdownHeight = 150; // Approximate height of dropdown menu
+
+    // Calculate fixed position for dropdown
+    const right = viewportWidth - buttonRect.right;
+
+    // Prefer opening below, but open above if not enough space below
+    if (spaceBelow >= dropdownHeight) {
+      setDropdownStyle({ top: buttonRect.bottom + 8, right });
+    } else if (spaceAbove >= dropdownHeight) {
+      setDropdownStyle({ bottom: viewportHeight - buttonRect.top + 8, right });
+    } else {
+      // Not enough space either way - open in direction with more space
+      if (spaceBelow >= spaceAbove) {
+        setDropdownStyle({ top: buttonRect.bottom + 8, right });
+      } else {
+        setDropdownStyle({ bottom: viewportHeight - buttonRect.top + 8, right });
+      }
+    }
+
+    setShowDropdown(eventId);
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -374,10 +409,7 @@ export default function EventsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {events.map((event, index) => {
-                  // Open dropdown upward for last 2 rows, downward for others
-                  const isLastRows = index >= events.length - 2;
-                  return (
+                {events.map((event) => (
                   <tr key={event.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">
@@ -427,11 +459,7 @@ export default function EventsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="relative">
                         <button
-                          onClick={() =>
-                            setShowDropdown(
-                              showDropdown === event.id ? null : event.id
-                            )
-                          }
+                          onClick={(e) => handleDropdownToggle(event.id, e)}
                           className="text-gray-400 hover:text-gray-600"
                         >
                           <MoreVertical className="h-5 w-5" />
@@ -440,12 +468,17 @@ export default function EventsPage() {
                         {showDropdown === event.id && (
                           <>
                             <div
-                              className="fixed inset-0 z-10"
+                              className="fixed inset-0 z-[100]"
                               onClick={() => setShowDropdown(null)}
                             />
-                            <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20 ${
-                              isLastRows ? 'bottom-full mb-2' : 'mt-2'
-                            }`}>
+                            <div
+                              className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[101]"
+                              style={{
+                                ...(dropdownStyle.top !== undefined && { top: dropdownStyle.top }),
+                                ...(dropdownStyle.bottom !== undefined && { bottom: dropdownStyle.bottom }),
+                                right: dropdownStyle.right,
+                              }}
+                            >
                               <button
                                 onClick={() => handleViewDetails(event.id)}
                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
@@ -479,8 +512,7 @@ export default function EventsPage() {
                       </div>
                     </td>
                   </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>
@@ -533,15 +565,22 @@ export default function EventsPage() {
                   </div>
                   <div className="relative flex-shrink-0">
                     <button
-                      onClick={() => setShowDropdown(showDropdown === event.id ? null : event.id)}
+                      onClick={(e) => handleDropdownToggle(event.id, e)}
                       className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                     >
                       <MoreVertical className="h-4 w-4" />
                     </button>
                     {showDropdown === event.id && (
                       <>
-                        <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(null)} />
-                        <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1.5 z-20">
+                        <div className="fixed inset-0 z-[100]" onClick={() => setShowDropdown(null)} />
+                        <div
+                          className="fixed w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1.5 z-[101]"
+                          style={{
+                            ...(dropdownStyle.top !== undefined && { top: dropdownStyle.top }),
+                            ...(dropdownStyle.bottom !== undefined && { bottom: dropdownStyle.bottom }),
+                            right: dropdownStyle.right,
+                          }}
+                        >
                           <button
                             onClick={() => handleViewDetails(event.id)}
                             className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"

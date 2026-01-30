@@ -8,8 +8,14 @@
   --blue-color: #0045f8;
 }
 .container-custom {
-  width: 90%;
+  width: 94%;
   margin-inline: auto;
+}
+
+@media (min-width: 480px) {
+  .container-custom {
+    width: 90%;
+  }
 }
 
 @media (min-width: 640px) {

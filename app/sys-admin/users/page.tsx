@@ -35,7 +35,7 @@ export default function UsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{ [key: string]: 'bottom' | 'top' }>({});
+  const [dropdownStyle, setDropdownStyle] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
   const [showDetailsModal, setShowDetailsModal] = useState<User | null>(null);
   const [showBanModal, setShowBanModal] = useState<User | null>(null);
   const [showUnbanModal, setShowUnbanModal] = useState<User | null>(null);
@@ -129,18 +129,37 @@ export default function UsersPage() {
   };
 
   const handleDropdownToggle = (userId: string, event: React.MouseEvent<HTMLButtonElement>) => {
+    if (showDropdown === userId) {
+      setShowDropdown(null);
+      return;
+    }
+
     const button = event.currentTarget;
     const buttonRect = button.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
     const spaceBelow = viewportHeight - buttonRect.bottom;
-    const dropdownHeight = 200; // Approximate height of dropdown menu (3 buttons + padding + margins)
+    const spaceAbove = buttonRect.top;
+    const dropdownHeight = 200; // Approximate height of dropdown menu
 
-    // Determine if dropdown should open upwards or downwards
-    // Add extra buffer to ensure it opens upward earlier
-    const position = spaceBelow < dropdownHeight ? 'top' : 'bottom';
+    // Calculate fixed position for dropdown
+    const right = viewportWidth - buttonRect.right;
 
-    setDropdownPosition(prev => ({ ...prev, [userId]: position }));
-    setShowDropdown(showDropdown === userId ? null : userId);
+    // Prefer opening below, but open above if not enough space below
+    if (spaceBelow >= dropdownHeight) {
+      setDropdownStyle({ top: buttonRect.bottom + 8, right });
+    } else if (spaceAbove >= dropdownHeight) {
+      setDropdownStyle({ bottom: viewportHeight - buttonRect.top + 8, right });
+    } else {
+      // Not enough space either way - open in direction with more space
+      if (spaceBelow >= spaceAbove) {
+        setDropdownStyle({ top: buttonRect.bottom + 8, right });
+      } else {
+        setDropdownStyle({ bottom: viewportHeight - buttonRect.top + 8, right });
+      }
+    }
+
+    setShowDropdown(userId);
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -338,11 +357,12 @@ export default function UsersPage() {
                               onClick={() => setShowDropdown(null)}
                             />
                             <div
-                              className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[101] max-h-64 overflow-y-auto ${
-                                dropdownPosition[user.id] === 'top'
-                                  ? 'bottom-full mb-2'
-                                  : 'top-full mt-2'
-                              }`}
+                              className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[101] max-h-64 overflow-y-auto"
+                              style={{
+                                ...(dropdownStyle.top !== undefined && { top: dropdownStyle.top }),
+                                ...(dropdownStyle.bottom !== undefined && { bottom: dropdownStyle.bottom }),
+                                right: dropdownStyle.right,
+                              }}
                             >
                               <button
                                 onClick={() => {
@@ -464,7 +484,14 @@ export default function UsersPage() {
                     {showDropdown === user.id && (
                       <>
                         <div className="fixed inset-0 z-[100]" onClick={() => setShowDropdown(null)} />
-                        <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1.5 z-[101]">
+                        <div
+                          className="fixed w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1.5 z-[101]"
+                          style={{
+                            ...(dropdownStyle.top !== undefined && { top: dropdownStyle.top }),
+                            ...(dropdownStyle.bottom !== undefined && { bottom: dropdownStyle.bottom }),
+                            right: dropdownStyle.right,
+                          }}
+                        >
                           <button
                             onClick={() => { setShowDetailsModal(user); setShowDropdown(null); }}
                             className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"

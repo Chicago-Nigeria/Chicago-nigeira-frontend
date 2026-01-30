@@ -71,6 +71,7 @@ export interface PaginatedData<T> {
 
 export interface IUser {
   _id: string;
+  id?: string;
   firstName: string;
   lastName: string;
   gender: "male" | "female" | "other";
@@ -87,12 +88,55 @@ export interface IUser {
   isIdVerified: boolean;
   isMobileVerified: boolean;
   photo: string;
+  headerImage?: string;
   blurHash: string;
   role: "user" | "admin";
   isProfileComplete: boolean;
   preference: string[];
   isEmailVerified: boolean;
   isTermAndConditionAccepted: boolean;
+  createdAt?: string;
+  _count?: {
+    followers: number;
+    following: number;
+    posts: number;
+    events: number;
+    listings: number;
+  };
+}
+
+// Public user profile (for viewing other users)
+export interface IUserProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  photo: string | null;
+  headerImage?: string;
+  bio?: string;
+  location?: string;
+  profession?: string;
+  company?: string;
+  createdAt: string;
+  isFollowing?: boolean;
+  isOwnProfile?: boolean;
+  _count: {
+    followers: number;
+    following: number;
+    posts: number;
+    events: number;
+    listings: number;
+  };
+}
+
+// User in follow lists (followers/following)
+export interface IFollowUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  photo: string | null;
+  profession?: string;
+  location?: string;
+  isFollowing?: boolean;
 }
 
 export interface IListing {
@@ -119,4 +163,112 @@ export interface IListing {
   currency: "NGN" | "USD";
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Post types
+export interface IPostAuthor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  photo: string | null;
+  profession?: string;
+  location?: string;
+  bio?: string;
+}
+
+export interface IPost {
+  id: string;
+  content: string;
+  images: string[];
+  videos: string[];
+  type: "post" | "article" | "poll" | "blog";
+  authorId: string;
+  author: IPostAuthor & { role?: string };
+  _count: {
+    likes: number;
+    comments: number;
+    saves: number;
+  };
+  isLiked?: boolean;
+  isSaved?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IComment {
+  id: string;
+  content: string;
+  authorId: string;
+  author: IPostAuthor;
+  postId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PostMeta {
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+// Promoted content types
+export interface IPromotedEvent {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  venue?: string;
+  startDate: string;
+  endDate?: string;
+  startTime: string;
+  endTime?: string;
+  coverImage?: string;
+  isFree: boolean;
+  ticketPrice?: number;
+  totalTickets?: number;
+  availableTickets?: number;
+  status: EventStatus;
+  organizer: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    photo?: string;
+  };
+  _count: {
+    registrations: number;
+    tickets: number;
+  };
+}
+
+export interface IPromotedContent {
+  id: string;
+  contentType: "event" | "ad";
+  eventId?: string;
+  event?: IPromotedEvent;
+  adTitle?: string;
+  adDescription?: string;
+  adImage?: string;
+  adUrl?: string;
+  adCtaText?: string;
+  isActive: boolean;
+  priority: number;
+  startDate: string;
+  endDate?: string;
+  impressions: number;
+  clicks: number;
+  promotedBy: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IFeedItem {
+  type: "post" | "promoted_event";
+  data: IPost | IPromotedContent;
 }
