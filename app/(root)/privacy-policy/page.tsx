@@ -115,10 +115,10 @@ export default function PrivacyPolicyPage() {
           <p className="text-gray-700 leading-relaxed">
             For questions about this Privacy Policy, contact:
           </p>
-          <div className="bg-gray-50 rounded-lg p-4 mt-4">
+          <div className="bg-gray-50 rounded-lg p-4 mt-4 break-words">
             <p className="text-gray-700 font-medium">Chicago Nigerians</p>
-            <p className="text-gray-600">Email: support@chicagonigerians.com</p>
-            <p className="text-gray-600">Website: https://www.chicagonigerians.com/contact</p>
+            <p className="text-gray-600 break-all">Email: support@chicagonigerians.com</p>
+            <p className="text-gray-600 break-all">Website: https://www.chicagonigerians.com/contact</p>
           </div>
 
           {/* Related Links */}

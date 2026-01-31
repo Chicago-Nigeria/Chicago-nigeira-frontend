@@ -108,7 +108,7 @@ export default function Index() {
                 >
                   <Link
                     className="bg-linear-to-r from-[#037244] to-[#04C977] text-white text-xs md:text-base inline-block px-4 py-2 md:py-1 rounded-lg"
-                    href={"/events"}
+                    href={"/feeds"}
                   >
                     Join our community
                   </Link>
@@ -418,7 +418,7 @@ export default function Index() {
             >
               <Link
                 className="bg-linear-to-r from-[#037244] to-[#04C977] text-white inline-block px-4 py-1 rounded-lg mt-12"
-                href={"/events"}
+                href={"/feeds"}
               >
                 Join our community
               </Link>
@@ -762,7 +762,7 @@ export default function Index() {
             >
               <Link
                 className="bg-linear-to-r from-[#037244] to-[#04C977] text-white text-xs md:text-base inline-block px-4 py-2 md:py-1 rounded-lg"
-                href={"/events"}
+                href={"/feeds"}
               >
                 Join our community
               </Link>
@@ -880,7 +880,7 @@ export default function Index() {
                 </Link>
               </li>
               <li>
-                <Link className="" href={"/news"}>
+                <Link className="" href={"/feeds"}>
                   News/Trending
                 </Link>
               </li>

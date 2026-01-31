@@ -40,15 +40,15 @@ export default function CookieConsent() {
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6"
         >
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden relative">
             <div className="p-4 sm:p-6">
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 text-center sm:text-left">
                 <div className="hidden sm:flex w-12 h-12 rounded-full bg-[var(--primary-color)]/10 items-center justify-center flex-shrink-0">
                   <Cookie className="w-6 h-6 text-[var(--primary-color)]" />
                 </div>
 
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                     <Cookie className="w-5 h-5 text-[var(--primary-color)] sm:hidden" />
                     <h3 className="font-semibold text-gray-900">We use cookies</h3>
                   </div>
@@ -66,37 +66,37 @@ export default function CookieConsent() {
                     to learn more.
                   </p>
 
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <button
                       onClick={handleAccept}
-                      className="px-6 py-2.5 bg-[var(--primary-color)] text-white rounded-lg font-medium hover:bg-[var(--primary-color)]/90 transition-colors"
+                      className="w-full sm:w-auto px-6 py-2.5 bg-[var(--primary-color)] text-white rounded-lg font-medium hover:bg-[var(--primary-color)]/90 transition-colors"
                     >
                       Accept All
                     </button>
                     <button
                       onClick={handleDecline}
-                      className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                      className="w-full sm:w-auto px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
                     >
                       Decline
                     </button>
                     <Link
                       href="/cookie-policy"
                       target="_blank"
-                      className="px-6 py-2.5 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center"
+                      className="w-full sm:w-auto px-6 py-2.5 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center"
                     >
                       Learn More
                     </Link>
                   </div>
                 </div>
-
-                <button
-                  onClick={handleDecline}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-                  aria-label="Close cookie banner"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
               </div>
+
+              <button
+                onClick={handleDecline}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Close cookie banner"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
             </div>
           </div>
         </motion.div>
