@@ -33,11 +33,10 @@ export default function ProfileTabs({ userId, isOwnProfile }: ProfileTabsProps) 
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-full transition-all ${
-                  isActive
+                className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-full transition-all ${isActive
                     ? "bg-white text-gray-900 shadow-sm"
                     : "text-gray-500 hover:text-gray-700"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -76,7 +75,20 @@ export default function ProfileTabs({ userId, isOwnProfile }: ProfileTabsProps) 
             </aside>
           </div>
         )}
-        {activeTab === "marketplace" && <MarketplaceTab />}
+        {activeTab === "marketplace" && (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+            {/* Marketplace Feed */}
+            <div>
+              <MarketplaceTab userId={userId} />
+            </div>
+            {/* Suggested Users */}
+            <aside className="hidden lg:block">
+              <div className="sticky top-24">
+                <SuggestedUsers limit={5} />
+              </div>
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   );

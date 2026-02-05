@@ -7,10 +7,12 @@ interface ShareButtonProps {
 	title: string;
 	url?: string;
 	className?: string;
+	shareText?: string;
 }
 
-export default function ShareButton({ title, url, className }: ShareButtonProps) {
+export default function ShareButton({ title, url, className, shareText }: ShareButtonProps) {
 	const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+	const defaultShareText = shareText || "Check this out!";
 
 	// Check if device is mobile
 	const isMobile = () => {
@@ -50,7 +52,7 @@ export default function ShareButton({ title, url, className }: ShareButtonProps)
 			try {
 				await navigator.share({
 					title,
-					text: "Check out this event!",
+					text: defaultShareText,
 					url: shareUrl,
 				});
 				toast.success("Shared successfully!");

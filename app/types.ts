@@ -140,29 +140,59 @@ export interface IFollowUser {
 }
 
 export interface IListing {
-  _id: string;
-  userId: string;
+  id: string;
+  _id?: string; // Legacy support
+  sellerId: string;
+  userId?: string; // Legacy support
   title: string;
   category: string;
-  video: string;
-  photos: string[];
-  tags: string[];
   description: string;
-  condition: string;
-  user: IUser;
-  priceType: string;
-  likes: [];
-  comments: [];
-  ratings: number;
   price: number;
-  location: string;
-  status: "aproved" | "pending";
-  isVerified: boolean;
-  isFlagged: boolean;
-  totalLikes: number;
-  currency: "NGN" | "USD";
-  createdAt: Date;
-  updatedAt: Date;
+  priceType?: "fixed" | "negotiable";
+  condition: string;
+  images: string[];
+  photos?: string[]; // Legacy support
+  tags?: string[];
+  location: string | null;
+  phoneNumber?: string;
+  whatsappNumber?: string;
+  email?: string;
+  status: "active" | "sold" | "archived";
+  seller: IListingSeller;
+  user?: IUser; // Legacy support
+  _count?: {
+    likes: number;
+    saves: number;
+    views: number;
+  };
+  userInteraction?: {
+    liked: boolean;
+    saved: boolean;
+  };
+  // Computed/legacy fields
+  rating?: number;
+  ratingCount?: number;
+  ratings?: number;
+  totalLikes?: number;
+  views?: number;
+  isVerified?: boolean;
+  isFlagged?: boolean;
+  currency?: "NGN" | "USD";
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface IListingSeller {
+  id: string;
+  firstName: string;
+  lastName: string;
+  photo: string | null;
+  phone?: string;
+  bio?: string;
+  createdAt?: string;
+  _count?: {
+    listings: number;
+  };
 }
 
 // Post types

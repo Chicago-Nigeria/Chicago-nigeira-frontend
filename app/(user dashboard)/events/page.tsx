@@ -85,15 +85,15 @@ export default function Events() {
 					</p>
 				</div>
 
-	{/* Create Event button temporarily disabled - events are created by admins
+				{/* Create Event button - hidden on mobile, shown in header on desktop */}
 				<Link
 					href="/events/create-event"
-					className="flex items-center gap-2 justify-center px-4 py-2.5 rounded-lg text-sm font-medium bg-[var(--primary-color)] text-white w-full sm:w-auto hover:bg-[var(--primary-color)]/90 transition shadow-sm"
+					className="hidden sm:flex items-center gap-2 justify-center px-4 py-2.5 rounded-lg text-sm font-medium bg-[var(--primary-color)] text-white sm:w-auto hover:bg-[var(--primary-color)]/90 transition shadow-sm"
 				>
 					<Plus className="w-4 h-4" />
 					<span className="whitespace-nowrap">Create Event</span>
 				</Link>
-				*/}
+
 			</div>
 
 			{/* My Events - Mobile View (above search and events) */}
@@ -120,11 +120,10 @@ export default function Events() {
 						<button
 							key={category}
 							onClick={() => setSelectedCategory(category)}
-							className={`px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap flex-shrink-0 ${
-								selectedCategory === category
+							className={`px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap flex-shrink-0 ${selectedCategory === category
 									? "bg-[var(--primary-color)] text-white"
 									: "bg-white text-gray-700 border border-gray-200 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)]"
-							}`}
+								}`}
 						>
 							{category}
 						</button>
@@ -134,11 +133,10 @@ export default function Events() {
 					<button
 						ref={buttonRef}
 						onClick={handleDropdownToggle}
-						className={`px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap flex items-center gap-1 flex-shrink-0 ${
-							dropdownCategories.includes(selectedCategory)
+						className={`px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap flex items-center gap-1 flex-shrink-0 ${dropdownCategories.includes(selectedCategory)
 								? "bg-[var(--primary-color)] text-white"
 								: "bg-white text-gray-700 border border-gray-200 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)]"
-						}`}
+							}`}
 					>
 						{dropdownCategories.includes(selectedCategory) ? selectedCategory : "More"}
 						<ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? "rotate-180" : ""}`} />
@@ -162,11 +160,10 @@ export default function Events() {
 									setSelectedCategory(category);
 									setShowDropdown(false);
 								}}
-								className={`w-full text-left px-4 py-2 text-sm transition ${
-									selectedCategory === category
+								className={`w-full text-left px-4 py-2 text-sm transition ${selectedCategory === category
 										? "bg-[var(--primary-color)] text-white"
 										: "text-gray-700 hover:bg-gray-50"
-								}`}
+									}`}
 							>
 								{category}
 							</button>
@@ -187,6 +184,17 @@ export default function Events() {
 					<EventStatus user={user} />
 				</aside>
 			</main>
+
+			{/* Floating Create Event Button - Mobile Only */}
+			<div className="sm:hidden fixed bottom-24 right-5 z-50">
+				<Link
+					href="/events/create-event"
+					className="rounded-full flex items-center justify-center p-3 bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/90 transition-colors shadow-lg"
+					title="Create Event"
+				>
+					<Plus className="w-6 h-6" />
+				</Link>
+			</div>
 		</>
 	);
 }

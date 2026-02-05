@@ -1,14 +1,16 @@
 "use client";
 
-import { Heart } from "lucide-react";
-
+import { Heart, Loader2 } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
-
 import { PostCard, PostCardSkeleton } from "../client/postCard";
-import { useListing } from "@/app/hooks/useListing";
+import { useListing, ListingFilters } from "@/app/hooks/useListing";
 
-export default function MarketplaceProducts() {
+interface MarketplaceProductsProps {
+  filters?: ListingFilters;
+}
+
+export default function MarketplaceProducts({ filters }: MarketplaceProductsProps) {
   const { ref, inView } = useInView({
     threshold: 0,
     rootMargin: "100px",
@@ -21,29 +23,19 @@ export default function MarketplaceProducts() {
     isFetchingNextPage,
     status,
     error,
-  } = useListing();
+  } = useListing(filters);
 
   useEffect(() => {
-    console.log("hasNextPage: ", hasNextPage);
-
     if (inView && hasNextPage && !isFetchingNextPage) {
-      const meta = data?.pages[data.pages.length - 1].data?.data.meta;
-
-      const nextPage = Number(meta?.page) + 1;
-
-      console.log("infinite query: ", nextPage);
-
-      fetchNextPage({ pageParam: { page: nextPage } } as never);
+      fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, data?.pages]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  console.log("infinite query: ", data);
-
-  const allPosts = data?.pages.flatMap((page) => page?.data?.data.data) || [];
+  const allPosts = data?.pages.flatMap((page) => page?.data?.data?.data) || [];
 
   if (status === "pending") {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
         {Array.from({ length: 4 }).map((_, index) => (
           <PostCardSkeleton key={index} />
         ))}
@@ -51,38 +43,45 @@ export default function MarketplaceProducts() {
     );
   }
 
-  // Render error state
   if (status === "error" && error) {
     return <ErrorMessage error={error} />;
   }
 
-  // Render empty state
   if (allPosts.length === 0) {
     return <EmptyState />;
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
         {allPosts.map((post) => {
           if (!post) return null;
-          return <PostCard key={post?._id} post={post!} />;
+          return <PostCard key={post?.id} post={post!} />;
         })}
       </div>
 
-      {/* Loading indicator and intersection observer target */}
-      <div ref={ref} className="mt-8">
+      {/* Load More Section */}
+      <div ref={ref} className="mt-6">
         {isFetchingNextPage && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-            {Array.from({ length: 2 }).map((_, index) => (
-              <PostCardSkeleton key={index} />
-            ))}
+          <div className="flex justify-center py-4">
+            <Loader2 className="w-6 h-6 animate-spin text-[var(--primary-color)]" />
+          </div>
+        )}
+
+        {hasNextPage && !isFetchingNextPage && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => fetchNextPage()}
+              className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Load More Listings
+            </button>
           </div>
         )}
 
         {!hasNextPage && allPosts.length > 0 && (
-          <div className="text-center py-8 text-gray-500">
-            You&apos;ve reached the end of the list
+          <div className="text-center py-6 text-sm text-gray-500">
+            You&apos;ve reached the end of the listings
           </div>
         )}
       </div>
@@ -91,11 +90,11 @@ export default function MarketplaceProducts() {
 }
 
 const ErrorMessage = ({ error }: { error: Error }) => (
-  <div className="text-center py-8 text-red-600">
-    <p>Error loading posts: {error.message}</p>
+  <div className="text-center py-12 bg-white rounded-xl">
+    <p className="text-red-600 mb-4">Error loading listings: {error.message}</p>
     <button
       onClick={() => window.location.reload()}
-      className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+      className="px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors"
     >
       Retry
     </button>
@@ -103,11 +102,11 @@ const ErrorMessage = ({ error }: { error: Error }) => (
 );
 
 const EmptyState = () => (
-  <div className="text-center py-12">
-    <div className="text-gray-400 mb-4">
+  <div className="text-center py-16 bg-white rounded-xl">
+    <div className="text-gray-300 mb-4">
       <Heart className="w-16 h-16 mx-auto" />
     </div>
-    <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
-    <p className="text-gray-500">Check back later for new marketplace items.</p>
+    <h3 className="text-lg font-medium text-gray-900 mb-2">No listings found</h3>
+    <p className="text-gray-500 text-sm">Check back later for new marketplace items.</p>
   </div>
 );

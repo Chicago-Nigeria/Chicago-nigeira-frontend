@@ -1,24 +1,89 @@
 "use client";
 
-import { ShoppingBag, Clock } from "lucide-react";
+import { useRef, useCallback } from "react";
+import { Loader2, ShoppingBag } from "lucide-react";
+import { useUserListings } from "@/app/hooks/useUserProfile";
+import { PostCard } from "@/app/(user dashboard)/marketplace/components/client/postCard";
+import { IListing } from "@/app/types";
 
-export default function MarketplaceTab() {
+interface MarketplaceTabProps {
+  userId: string;
+}
+
+export default function MarketplaceTab({ userId }: MarketplaceTabProps) {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useUserListings(userId);
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isLoading || isFetchingNextPage) return;
+      if (observerRef.current) observerRef.current.disconnect();
+
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
+        }
+      });
+
+      if (node) observerRef.current.observe(node);
+    },
+    [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]
+  );
+
+  const allListings = data?.pages.flatMap((page) => page.data) || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">Failed to load listings</p>
+      </div>
+    );
+  }
+
+  if (allListings.length === 0) {
+    return (
+      <div className="text-center py-12 px-4">
+        <ShoppingBag className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+        <h3 className="text-base font-medium text-gray-900 mb-1">No listings yet</h3>
+        <p className="text-sm text-gray-500">
+          Marketplace listings will appear here once they start selling.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="text-center py-12 px-4">
-      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-        <ShoppingBag className="w-10 h-10 text-gray-400" />
+    <div className="space-y-4">
+      {/* 1 per row on mobile, 2 per row on sm+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+        {allListings.map((listing: IListing) => (
+          <PostCard key={listing.id || listing._id} post={listing} />
+        ))}
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        Marketplace Coming Soon
-      </h3>
-      <p className="text-sm text-gray-500 max-w-sm mx-auto mb-4">
-        We're working on bringing marketplace listings to user profiles.
-        Check back soon to see items for sale from this user.
-      </p>
-      <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-600">
-        <Clock className="w-4 h-4" />
-        <span>Feature in development</span>
-      </div>
+
+      {/* Load more trigger */}
+      {hasNextPage && (
+        <div ref={loadMoreRef} className="py-4 text-center">
+          {isFetchingNextPage && (
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
+          )}
+        </div>
+      )}
     </div>
   );
 }

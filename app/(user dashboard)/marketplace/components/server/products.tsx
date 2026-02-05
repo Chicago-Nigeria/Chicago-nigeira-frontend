@@ -70,7 +70,7 @@ const postDetails: postDetailsType[] = [
 export default function MarketplaceProducts() {
   useEffect(() => {
     async function getListings() {
-      callApi("/api/v1/listing").then((response) => {
+      callApi("/listings").then((response) => {
         console.log(response);
       });
     }

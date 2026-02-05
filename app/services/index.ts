@@ -11,10 +11,10 @@ export namespace User {
   export const getUserPosts = (userId: string, params?: { cursor?: string; limit?: number }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<IPost[]> & { meta: PostMeta }>(`/users/${userId}/posts?${queryString}`);
   };
@@ -22,10 +22,10 @@ export namespace User {
   export const getUserEvents = (userId: string, params?: { cursor?: string; limit?: number }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<any[]> & { meta: PostMeta }>(`/users/${userId}/events?${queryString}`);
   };
@@ -33,10 +33,10 @@ export namespace User {
   export const getFollowers = (userId: string, params?: { cursor?: string; limit?: number }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<IFollowUser[]> & { meta: PostMeta }>(`/users/${userId}/followers?${queryString}`);
   };
@@ -44,10 +44,10 @@ export namespace User {
   export const getFollowing = (userId: string, params?: { cursor?: string; limit?: number }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<IFollowUser[]> & { meta: PostMeta }>(`/users/${userId}/following?${queryString}`);
   };
@@ -68,23 +68,38 @@ export namespace User {
     const query = limit ? `?limit=${limit}` : "";
     return callApi<ApiResponse<IFollowUser[]>>(`/users/suggestions${query}`);
   };
+
+  export const getUserListings = (userId: string, params?: { cursor?: string; limit?: number }) => {
+    const queryString = params
+      ? new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
+      : "";
+    return callApi<ApiResponse<IListing[]> & { meta: PostMeta }>(`/users/${userId}/listings?${queryString}`);
+  };
 }
 
 export namespace Listing {
   export const getAllListing = (params?: Record<string, unknown>) => {
     const queryString = params
       ? new URLSearchParams(
-          params as unknown as Record<string, string>
-        ).toString()
+        params as unknown as Record<string, string>
+      ).toString()
       : "";
 
     return callApi<ApiResponse<PaginatedData<IListing>>>(
-      `/listing?${queryString}`
+      `/listings?${queryString}`
     );
   };
 
   export const getListingById = (id: string) => {
-    return callApi<ApiResponse<IListing>>(`/listing/${id}`);
+    return callApi<ApiResponse<IListing>>(`/listings/${id}`);
+  };
+
+  export const getRelatedListings = (id: string) => {
+    return callApi<ApiResponse<IListing[]>>(`/listings/${id}/related`);
   };
 }
 
@@ -98,10 +113,10 @@ export namespace Post {
   export const getAllPosts = (params?: { page?: number; limit?: number; cursor?: string }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<IPost[]> & { meta: PostMeta }>(`/posts?${queryString}`);
   };
@@ -133,10 +148,10 @@ export namespace Post {
   export const getComments = (postId: string, params?: { page?: number; limit?: number }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<PaginatedData<IComment>>>(`/posts/${postId}/comments?${queryString}`);
   };
@@ -157,10 +172,10 @@ export namespace Post {
   export const getBlogPosts = (params?: { page?: number; limit?: number; cursor?: string }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<IPost[]> & { meta: PostMeta }>(`/posts/blog?${queryString}`);
   };
@@ -168,10 +183,10 @@ export namespace Post {
   export const getFollowingPosts = (params?: { page?: number; limit?: number; cursor?: string }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<IPost[]> & { meta: PostMeta }>(`/posts/following?${queryString}`);
   };
@@ -208,10 +223,10 @@ export namespace AdminBlog {
   export const getAllPosts = (params?: { page?: number; limit?: number; search?: string }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<IPost[]> & { meta: Meta }>(`/admin/posts?${queryString}`);
   };
@@ -234,10 +249,10 @@ export namespace AdminPromoted {
   export const getAll = (params?: { page?: number; limit?: number; contentType?: string; isActive?: string }) => {
     const queryString = params
       ? new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
       : "";
     return callApi<ApiResponse<IPromotedContent[]> & { meta: Meta }>(`/admin/promoted-content?${queryString}`);
   };

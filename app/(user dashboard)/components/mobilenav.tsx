@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 export default function MobileNavigation({ navigationLinks }: { navigationLinks: NavItem[] }) {
 	const pathname = usePathname();
 	return (
-		<nav className="fixed overflow-auto bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50 safe-area-bottom">
+		<nav className="fixed overflow-auto bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-50 safe-area-bottom">
 			<div className="flex items-center">
 				{navigationLinks.map((item) => {
 					const IconComponent = item.icon;

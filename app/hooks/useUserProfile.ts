@@ -106,6 +106,28 @@ export function useFollowing(userId: string | null) {
   });
 }
 
+// Hook to fetch user's marketplace listings
+export function useUserListings(userId: string | null) {
+  return useInfiniteQuery({
+    queryKey: ["userListings", userId],
+    queryFn: async ({ pageParam }) => {
+      if (!userId) return { data: [], meta: { hasMore: false, nextCursor: null } };
+      const response = await User.getUserListings(userId, {
+        cursor: pageParam as string | undefined,
+        limit: 10,
+      });
+      if (response.error) throw new Error(response.error.message);
+      return {
+        data: response.data?.data || [],
+        meta: response.data?.meta,
+      };
+    },
+    getNextPageParam: (lastPage) => lastPage.meta?.nextCursor ?? undefined,
+    initialPageParam: undefined as string | undefined,
+    enabled: !!userId,
+  });
+}
+
 // Hook to fetch suggested users
 export function useSuggestedUsers(limit?: number) {
   return useQuery({
