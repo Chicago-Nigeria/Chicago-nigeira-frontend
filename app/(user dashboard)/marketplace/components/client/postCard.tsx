@@ -35,12 +35,20 @@ export const PostCard = ({ post }: { post: IListing }) => {
 			{/* Image Section */}
 			<div className="h-48 bg-gray-100 relative">
 				<Image
-					className="object-cover object-center w-full h-full"
+					className={`object-cover object-center w-full h-full ${post.status === 'sold' ? 'opacity-70' : ''}`}
 					src={imageUrl}
 					height={400}
 					width={300}
 					alt={post.title}
 				/>
+				{/* Sold Badge */}
+				{post.status === 'sold' && (
+					<div className="absolute inset-0 flex items-center justify-center">
+						<div className="bg-black/70 text-white px-4 py-2 rounded-lg font-bold text-sm transform -rotate-12 shadow-lg">
+							SOLD
+						</div>
+					</div>
+				)}
 				<div onClick={(e) => e.preventDefault()}>
 					<LikePost postId={listingId} />
 				</div>

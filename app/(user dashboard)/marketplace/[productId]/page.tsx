@@ -109,6 +109,19 @@ export default function ProductDetail() {
 	return (
 		<main className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4 md:gap-8">
 			<section className="space-y-4 md:pt-4">
+				{/* Sold Banner */}
+				{product.status === 'sold' && (
+					<div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+						<div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+							<span className="text-red-600 font-bold text-sm">!</span>
+						</div>
+						<div>
+							<p className="text-red-800 font-semibold">This item has been sold</p>
+							<p className="text-red-600 text-sm">This listing is no longer available for purchase.</p>
+						</div>
+					</div>
+				)}
+
 				{/* Header */}
 				<Link href="/marketplace" className="flex items-center gap-3 text-gray-600 hover:text-gray-900">
 					<ArrowLeft className="w-5 h-5" />
@@ -123,12 +136,21 @@ export default function ProductDetail() {
 					{/* Main Image */}
 					<div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[28rem] bg-gray-100">
 						<Image
-							className="object-cover object-center w-full h-full"
+							className={`object-cover object-center w-full h-full ${product.status === 'sold' ? 'opacity-70' : ''}`}
 							src={images[currentImageIndex]}
 							alt={product.title}
 							fill
 							priority
 						/>
+
+						{/* Sold Out Overlay */}
+						{product.status === 'sold' && (
+							<div className="absolute inset-0 flex items-center justify-center">
+								<div className="bg-black/80 text-white px-8 py-4 rounded-xl font-bold text-2xl transform -rotate-12 shadow-2xl border-4 border-white">
+									SOLD OUT
+								</div>
+							</div>
+						)}
 
 						{/* Navigation Arrows */}
 						{images.length > 1 && (

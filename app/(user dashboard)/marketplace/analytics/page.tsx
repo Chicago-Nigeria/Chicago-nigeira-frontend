@@ -53,7 +53,9 @@ interface AnalyticsOverview {
   totalViews: number;
   viewsTrend: number;
   totalInquiries: number;
+  inquiriesTrend: number;
   conversionRate: number;
+  conversionTrend: number;
   viewsByCategory: { category: string; views: number; color: string }[];
   viewsOverTime: { date: string; views: number }[];
 }
@@ -219,7 +221,9 @@ export default function MarketplaceAnalyticsPage() {
         totalViews: 3247,
         viewsTrend: 15.2,
         totalInquiries: 89,
+        inquiriesTrend: 8.5,
         conversionRate: 2.7,
+        conversionTrend: 5.3,
         viewsByCategory: [
           { category: 'Fashion', views: 160, color: '#10B981' },
           { category: 'Services', views: 270, color: '#3B82F6' },
@@ -301,7 +305,81 @@ export default function MarketplaceAnalyticsPage() {
   };
 
   const handleExportCSV = () => {
-    toast.success('Export started. Your file will download shortly.');
+    try {
+      const csvRows: string[] = [];
+
+      // Header with export date
+      csvRows.push(`Marketplace Analytics Export - ${new Date().toLocaleDateString()}`);
+      csvRows.push(`Date Range: ${dateRangeLabels[dateRange]}`);
+      csvRows.push('');
+
+      // Overview Section
+      if (overview) {
+        csvRows.push('=== OVERVIEW ===');
+        csvRows.push('Metric,Value,Trend');
+        csvRows.push(`Total Listings,${overview.totalListings},`);
+        csvRows.push(`Active Listings,${overview.activeListings},`);
+        csvRows.push(`Total Views,${overview.totalViews},${overview.viewsTrend}%`);
+        csvRows.push(`Total Inquiries,${overview.totalInquiries},${overview.inquiriesTrend}%`);
+        csvRows.push(`Conversion Rate,${overview.conversionRate}%,${overview.conversionTrend}%`);
+        csvRows.push('');
+
+        // Views by Category
+        csvRows.push('=== VIEWS BY CATEGORY ===');
+        csvRows.push('Category,Views');
+        overview.viewsByCategory.forEach(cat => {
+          csvRows.push(`${cat.category},${cat.views}`);
+        });
+        csvRows.push('');
+
+        // Views Over Time
+        csvRows.push('=== VIEWS OVER TIME ===');
+        csvRows.push('Date,Views');
+        overview.viewsOverTime.forEach(item => {
+          csvRows.push(`${item.date},${item.views}`);
+        });
+        csvRows.push('');
+      }
+
+      // Performance Section
+      if (performance) {
+        csvRows.push('=== PERFORMANCE ===');
+        csvRows.push('Metric,Value');
+        csvRows.push(`Best Performing Day,${performance.bestDay}`);
+        csvRows.push(`Best Day Increase,${performance.bestDayIncrease}%`);
+        csvRows.push(`Peak Hours,${performance.peakHours}`);
+        csvRows.push(`Average Response Time,${performance.avgResponseTime} hours`);
+        csvRows.push('');
+      }
+
+      // Listings Section
+      if (listings.length > 0) {
+        csvRows.push('=== MY LISTINGS ===');
+        csvRows.push('Title,Category,Price,Currency,Status,Views,Inquiries,Performance,Created At');
+        listings.forEach(listing => {
+          csvRows.push(`"${listing.title.replace(/"/g, '""')}",${listing.category},${listing.price},${listing.currency},${listing.status},${listing.views},${listing.inquiries},${listing.performance},${new Date(listing.createdAt).toLocaleDateString()}`);
+        });
+      }
+
+      // Create CSV content
+      const csvContent = csvRows.join('\n');
+
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `marketplace-analytics-${dateRange}-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Analytics exported successfully!');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export analytics. Please try again.');
+    }
   };
 
   const handleDeleteListing = async (id: string) => {
@@ -487,7 +565,7 @@ export default function MarketplaceAnalyticsPage() {
           {activeTab === 'overview' && (
             <div className="bg-white rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
               <div className="flex items-center gap-3">
-                
+
                 <div>
                   <h3 className="font-semibold text-gray-900">Boost Your Performance</h3>
                   <p className="text-sm text-gray-500">Get more visibility and inquiries with premium features</p>
@@ -683,33 +761,31 @@ function OverviewTab({
 
   const stats = [
     {
-      label: 'Total Listings',
-      value: data.totalListings,
-      subtitle: `${data.activeListings} Active Listings`,
+      label: `${data.totalListings} ${data.totalListings === 1 ? 'Listing' : 'Listings'}`,
+      subtitle: `${data.activeListings} Active`,
       icon: Package,
       color: 'bg-green-100 text-green-600',
     },
     {
-      label: 'Total Views',
-      value: data.totalViews.toLocaleString(),
-      subtitle: `+${data.viewsTrend}% last 30 days`,
+      label: `${data.totalViews.toLocaleString()} ${data.totalViews === 1 ? 'View' : 'Views'}`,
+      subtitle: `${data.viewsTrend >= 0 ? '+' : ''}${data.viewsTrend}% from last period`,
       icon: Eye,
       color: 'bg-blue-100 text-blue-600',
       trend: data.viewsTrend,
     },
     {
-      label: 'Inquiries',
-      value: data.totalInquiries,
-      subtitle: 'Messages',
+      label: `${data.totalInquiries} ${data.totalInquiries === 1 ? 'Message' : 'Messages'}`,
+      subtitle: `${data.inquiriesTrend >= 0 ? '+' : ''}${data.inquiriesTrend}% from last period`,
       icon: MessageSquare,
       color: 'bg-orange-100 text-orange-600',
+      trend: data.inquiriesTrend,
     },
     {
-      label: 'Conversion Rate',
-      value: `${data.conversionRate}%`,
-      subtitle: 'Clicks to inquiries',
+      label: `${data.conversionRate}% Conversion`,
+      subtitle: `${data.conversionTrend >= 0 ? '+' : ''}${data.conversionTrend}% from last period`,
       icon: TrendingUp,
       color: 'bg-purple-100 text-purple-600',
+      trend: data.conversionTrend,
     },
   ];
 
@@ -724,13 +800,13 @@ function OverviewTab({
                 <stat.icon className="w-5 h-5" />
               </div>
               {stat.trend !== undefined && (
-                <span className="text-xs text-green-600 font-medium flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" />
-                  {stat.trend}%
+                <span className={`text-xs font-medium flex items-center gap-1 ${stat.trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <TrendingUp className={`w-3 h-3 ${stat.trend < 0 ? 'rotate-180' : ''}`} />
+                  {Math.abs(stat.trend)}%
                 </span>
               )}
             </div>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+            <p className="font-bold text-gray-900">{stat.label}</p>
             <p className="text-xs text-gray-500 mt-1">{stat.subtitle}</p>
           </div>
         ))}
@@ -835,7 +911,7 @@ function PerformanceTab({
             </div>
             <span className="text-sm text-gray-500">Best Performing Day</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{data.bestDay}</p>
+          <p className="text-xl font-bold text-gray-900">{data.bestDay}</p>
           <p className="text-xs text-green-600 mt-1">Average {data.bestDayIncrease}% more</p>
         </div>
 
@@ -846,7 +922,7 @@ function PerformanceTab({
             </div>
             <span className="text-sm text-gray-500">Peak Hours</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{data.peakHours}</p>
+          <p className="text-xl font-bold text-gray-900">{data.peakHours}</p>
           <p className="text-xs text-gray-500 mt-1">Highest Engagement Time</p>
         </div>
 
@@ -857,7 +933,7 @@ function PerformanceTab({
             </div>
             <span className="text-sm text-gray-500">Avg. Response Time</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{data.avgResponseTime} Hrs</p>
+          <p className="text-xl font-bold text-gray-900">{data.avgResponseTime} Hrs</p>
           <p className="text-xs text-gray-500 mt-1">Keep it under 2 hours</p>
         </div>
       </div>
@@ -961,78 +1037,49 @@ function ListingsTab({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm max-w-[700px]">
       {/* Header */}
       <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h3 className="font-semibold text-gray-900">All Listings ({total})</h3>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onViewChange('info')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${view === 'info'
-              ? 'bg-[var(--primary-color)] text-white'
-              : 'text-gray-600 hover:bg-gray-100'
-              }`}
-          >
-            Info View
-          </button>
-          <button
-            onClick={() => onViewChange('performance')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${view === 'performance'
-              ? 'bg-[var(--primary-color)] text-white'
-              : 'text-gray-600 hover:bg-gray-100'
-              }`}
-          >
-            Performance View
-          </button>
-        </div>
       </div>
 
-      {/* Table */}
+      {/* Horizontally Scrollable Table */}
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap sticky left-0 bg-gray-50 z-10">
                 Listing
               </th>
-              {view === 'info' ? (
-                <>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Category
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Price
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Status
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Views
-                  </th>
-                </>
-              ) : (
-                <>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Views
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Inquiries
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Performance
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
-                </>
-              )}
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                Category
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                Price
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                Status
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                Views
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                Inquiries
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                Performance
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {listings.map((listing) => (
               <tr key={listing.id} className="hover:bg-gray-50">
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-3">
+                {/* Listing - Sticky Column */}
+                <td className="px-4 py-4 sticky left-0 bg-white hover:bg-gray-50 z-10">
+                  <Link href={`/marketplace/${listing.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <div className="w-10 h-10 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
                       {listing.images && listing.images.length > 0 ? (
                         <Image
@@ -1048,12 +1095,12 @@ function ListingsTab({
                         </div>
                       )}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate max-w-[150px] hover:text-[var(--primary-color)] transition-colors">
                         {listing.title}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Posted {new Date(listing.createdAt).toLocaleDateString()}
+                        {new Date(listing.createdAt).toLocaleDateString()}
                         {listing.isFeatured && (
                           <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded">
                             Featured
@@ -1061,86 +1108,108 @@ function ListingsTab({
                         )}
                       </p>
                     </div>
+                  </Link>
+                </td>
+                {/* Category */}
+                <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{listing.category}</td>
+                {/* Price */}
+                <td className="px-4 py-4 text-sm font-semibold text-gray-900 whitespace-nowrap">
+                  {formatPrice(listing.price, listing.currency)}
+                </td>
+                {/* Status */}
+                <td className="px-4 py-4 whitespace-nowrap">{getStatusBadge(listing.status)}</td>
+                {/* Views */}
+                <td className="px-4 py-4 text-sm text-gray-900 font-medium whitespace-nowrap">
+                  <div className="flex items-center gap-1">
+                    <Eye className="w-4 h-4 text-gray-400" />
+                    {listing.views}
                   </div>
                 </td>
-                {view === 'info' ? (
-                  <>
-                    <td className="px-5 py-4 text-sm text-gray-600">{listing.category}</td>
-                    <td className="px-5 py-4 text-sm font-semibold text-gray-900">
-                      {formatPrice(listing.price, listing.currency)}
-                    </td>
-                    <td className="px-5 py-4">{getStatusBadge(listing.status)}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600">{listing.views}</td>
-                  </>
-                ) : (
-                  <>
-                    <td className="px-5 py-4 text-sm text-gray-900 font-medium">{listing.views}</td>
-                    <td className="px-5 py-4 text-sm text-gray-900">{listing.inquiries}</td>
-                    <td className="px-5 py-4">{getPerformanceBadge(listing.performance)}</td>
-                    <td className="px-5 py-4">
-                      <div className="relative">
-                        <button
-                          onClick={() =>
-                            setShowActionDropdown(
-                              showActionDropdown === listing.id ? null : listing.id
-                            )
-                          }
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <Settings className="w-4 h-4 text-gray-500" />
-                        </button>
-
-                        {showActionDropdown === listing.id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-10"
-                              onClick={() => setShowActionDropdown(null)}
-                            />
-                            <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
-                              <button
-                                onClick={() => {
-                                  onEdit(listing.id);
-                                  setShowActionDropdown(null);
-                                }}
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                              >
-                                <Edit className="w-4 h-4" />
-                                Edit Listing
-                              </button>
-                              {listing.status === 'active' && (
-                                <button
-                                  onClick={() => {
-                                    onMarkSold(listing);
-                                    setShowActionDropdown(null);
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 flex items-center gap-2"
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                  Mark as Sold
-                                </button>
-                              )}
-                              <button
-                                onClick={() => {
-                                  onDelete(listing);
-                                  setShowActionDropdown(null);
-                                }}
-                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </>
-                )}
+                {/* Inquiries */}
+                <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
+                  <div className="flex items-center gap-1">
+                    <MessageSquare className="w-4 h-4 text-gray-400" />
+                    {listing.inquiries}
+                  </div>
+                </td>
+                {/* Performance */}
+                <td className="px-4 py-4 whitespace-nowrap">{getPerformanceBadge(listing.performance)}</td>
+                {/* Actions */}
+                <td className="px-4 py-4 whitespace-nowrap overflow-visible">
+                  <div className="dropdown-container" style={{ position: 'static' }}>
+                    <button
+                      id={`action-btn-${listing.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowActionDropdown(
+                          showActionDropdown === listing.id ? null : listing.id
+                        );
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-gray-500" />
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Actions Dropdown - Rendered outside table for proper visibility */}
+      {showActionDropdown && (() => {
+        const buttonEl = document.getElementById(`action-btn-${showActionDropdown}`);
+        const rect = buttonEl?.getBoundingClientRect();
+        return (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowActionDropdown(null)} />
+            <div
+              className="fixed z-50 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
+              style={{
+                top: rect ? `${rect.bottom + 4}px` : '50%',
+                left: rect ? `${rect.right - 176}px` : '50%',
+              }}
+            >
+              <button
+                onClick={() => {
+                  const listing = listings.find(l => l.id === showActionDropdown);
+                  if (listing) onEdit(listing.id);
+                  setShowActionDropdown(null);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                Edit Listing
+              </button>
+              {listings.find(l => l.id === showActionDropdown)?.status === 'active' && (
+                <button
+                  onClick={() => {
+                    const listing = listings.find(l => l.id === showActionDropdown);
+                    if (listing) onMarkSold(listing);
+                    setShowActionDropdown(null);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Mark as Sold
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  const listing = listings.find(l => l.id === showActionDropdown);
+                  if (listing) onDelete(listing);
+                  setShowActionDropdown(null);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Pagination */}
       {totalPages > 1 && (
