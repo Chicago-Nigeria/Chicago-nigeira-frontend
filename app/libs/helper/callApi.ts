@@ -4,8 +4,9 @@ import { AppError } from "@/app/types";
 import { toast } from "sonner";
 import { initSession } from "@/app/store/useSession";
 
-// Use your environment variables directly
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002/api";
+// Normalize API URL so env values with or without `/api` both work.
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002/api";
+const baseURL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 const frontendURL =
   process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
 

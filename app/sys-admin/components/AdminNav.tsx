@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Calendar, Shield, ScrollText, Package, X, Wallet, FileText, Megaphone } from 'lucide-react';
+import { Home, Users, Calendar, Shield, ScrollText, Package, X, Wallet, FileText, Megaphone, CreditCard } from 'lucide-react';
 
 interface AdminNavProps {
   isOpen?: boolean;
@@ -37,6 +37,11 @@ export default function AdminNav({ isOpen = true, onClose }: AdminNavProps) {
       name: 'Payouts',
       href: '/sys-admin/payouts',
       icon: Wallet,
+    },
+    {
+      name: 'Subscriptions',
+      href: '/sys-admin/subscriptions',
+      icon: CreditCard,
     },
     {
       name: 'Blog Posts',

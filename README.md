@@ -1,6 +1,6 @@
-# Chicago Nigeria - Frontend
+# Chicago Nigerians - Frontend
 
-This is the frontend application for the Chicago Nigeria community platform, built with [Next.js 15](https://nextjs.org) and React 19.
+This is the frontend application for the Chicago Nigerians community platform, built with [Next.js 15](https://nextjs.org) and React 19.
 
 ## Getting Started
 

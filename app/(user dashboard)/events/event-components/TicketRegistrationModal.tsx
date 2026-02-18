@@ -14,6 +14,7 @@ import ConfirmationModal from "./ConfirmationModal";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import StripeCheckout from "@/app/components/StripeCheckout";
+import { downloadCalendarInvite, type CalendarEventData } from "@/app/libs/helper/calendar";
 
 // Initialize Stripe
 const stripePromise = loadStripe(
@@ -90,6 +91,17 @@ export default function TicketRegistrationModal({
 
 	const quantity = watch("quantity") || 1;
 
+	const autoAddToCalendar = (registeredEventData: CalendarEventData) => {
+		if (typeof window === "undefined") return;
+		const eventUrl = registeredEventData?.id
+			? `${window.location.origin}/events/${registeredEventData.id}`
+			: undefined;
+		const inviteCreated = downloadCalendarInvite(registeredEventData, eventUrl);
+		if (inviteCreated) {
+			toast.success("Calendar invite downloaded.");
+		}
+	};
+
 	// Fetch price breakdown when quantity changes (for paid events)
 	useEffect(() => {
 		if (!event.isFree && quantity > 0) {
@@ -138,9 +150,14 @@ export default function TicketRegistrationModal({
 						throw new Error(response.error.message || "Failed to register for event");
 					}
 
+					const registeredEventData = response.data?.data?.event
+						? { ...event, ...response.data.data.event }
+						: event;
+
 					// Show confirmation modal
-					setRegisteredEvent(response.data?.data?.event || event);
+					setRegisteredEvent(registeredEventData);
 					setShowConfirmation(true);
+					autoAddToCalendar(registeredEventData);
 				} else {
 					// Paid event - create payment intent
 					const payload = {
@@ -198,6 +215,7 @@ export default function TicketRegistrationModal({
 			toast.success("Ticket purchased successfully!");
 			setRegisteredEvent(event);
 			setShowConfirmation(true);
+			autoAddToCalendar(event);
 		} catch (error: any) {
 			toast.error(error.message || "Failed to confirm payment");
 		}

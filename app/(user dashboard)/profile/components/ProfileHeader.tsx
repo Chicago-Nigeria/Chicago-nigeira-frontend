@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Calendar, User } from "lucide-react";
+import { MapPin, Calendar, User, MessageCircle } from "lucide-react";
 import { IUserProfile } from "@/app/types";
 import FollowButton from "./FollowButton";
 import FollowersModal from "./FollowersModal";
@@ -51,10 +51,19 @@ export default function ProfileHeader({ profile, isOwnProfile }: ProfileHeaderPr
                 Edit Profile
               </Link>
             ) : (
-              <FollowButton
-                userId={profile.id}
-                isFollowing={profile.isFollowing || false}
-              />
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/messages?userId=${profile.id}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition shadow-sm"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Message
+                </Link>
+                <FollowButton
+                  userId={profile.id}
+                  isFollowing={profile.isFollowing || false}
+                />
+              </div>
             )}
           </div>
         </div>

@@ -2,10 +2,15 @@
 
 import { useEffect } from "react";
 import { X, CheckCircle, Calendar, MapPin, Clock } from "lucide-react";
-import Image from "next/image";
+import { toast } from "sonner";
+import {
+	buildGoogleCalendarUrl,
+	downloadCalendarInvite,
+	type CalendarEventData,
+} from "@/app/libs/helper/calendar";
 
 interface ConfirmationModalProps {
-	event: any;
+	event: CalendarEventData;
 	onClose: () => void;
 }
 
@@ -13,9 +18,13 @@ export default function ConfirmationModal({
 	event,
 	onClose,
 }: ConfirmationModalProps) {
+	const googleCalendarUrl = buildGoogleCalendarUrl(event);
+
 	// Format date
-	const formatDate = (dateStr: string) => {
+	const formatDate = (dateStr?: string | Date | null) => {
+		if (!dateStr) return "Date TBA";
 		const date = new Date(dateStr);
+		if (Number.isNaN(date.getTime())) return "Date TBA";
 		return date.toLocaleDateString("en-US", {
 			weekday: "long",
 			month: "long",
@@ -25,9 +34,11 @@ export default function ConfirmationModal({
 	};
 
 	// Format time
-	const formatTime = (timeStr: string) => {
+	const formatTime = (timeStr?: string | null) => {
+		if (!timeStr) return "Time TBA";
 		const [hours, minutes] = timeStr.split(":");
-		const hour = parseInt(hours);
+		const hour = parseInt(hours, 10);
+		if (Number.isNaN(hour)) return "Time TBA";
 		const ampm = hour >= 12 ? "PM" : "AM";
 		const displayHour = hour % 12 || 12;
 		return `${displayHour}:${minutes} ${ampm}`;
@@ -39,6 +50,21 @@ export default function ConfirmationModal({
 			return `${event.venue}, ${event.location}`;
 		}
 		return event.location || event.venue || "Location TBA";
+	};
+
+	const handleAddToCalendar = () => {
+		const eventUrl =
+			typeof window !== "undefined" && event?.id
+				? `${window.location.origin}/events/${event.id}`
+				: undefined;
+
+		const inviteCreated = downloadCalendarInvite(event, eventUrl);
+		if (!inviteCreated) {
+			toast.error("Could not create calendar invite for this event.");
+			return;
+		}
+
+		toast.success("Calendar invite downloaded.");
 	};
 
 	// Close modal on Escape key
@@ -87,7 +113,7 @@ export default function ConfirmationModal({
 						Registration Successful!
 					</h2>
 					<p className="text-gray-600 text-sm">
-						You've successfully registered for this event
+						You have successfully registered for this event
 					</p>
 				</div>
 
@@ -145,6 +171,32 @@ export default function ConfirmationModal({
 								confirmation email with event details to your registered email address.
 							</p>
 						</div> */}
+
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+							<button
+								onClick={handleAddToCalendar}
+								className="px-4 py-2.5 text-sm font-semibold rounded-lg border border-[var(--primary-color)] text-[var(--primary-color)] hover:bg-[var(--primary-color)]/5 transition-colors"
+							>
+								Add to Calendar (.ics)
+							</button>
+							{googleCalendarUrl ? (
+								<a
+									href={googleCalendarUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="px-4 py-2.5 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-center"
+								>
+									Google Calendar
+								</a>
+							) : (
+								<button
+									disabled
+									className="px-4 py-2.5 text-sm font-semibold rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed"
+								>
+									Google Calendar
+								</button>
+							)}
+						</div>
 
 						{/* Close Button */}
 						<button

@@ -269,9 +269,9 @@ export default function SignUpModalContent({
 								className="bg-white ps-1 py-2.5 sm:py-3 text-sm text-gray-700 focus:outline-none border-r border-gray-300"
 							>
 								<option value="+1">+1 (US)</option>
-								{/* <option value="+44">+44 (UK)</option>
+								{/* <option value="+44">+44 (UK)</option> */}
 								<option value="+234">+234 (NG)</option>
-								<option value="+91">+91 (IN)</option> */}
+								{/* <option value="+91">+91 (IN)</option> */}
 							</select>
 							<input
 								type="text"

@@ -13,9 +13,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Chicago Nigeria",
+  title: "Chicago Nigerians",
   description:
-    "Chicago Nigeria is a web platform to connect Nigerians who reside in Chicago together",
+    "Chicago Nigerians is a web platform to connect Nigerians who reside in Chicago together",
   icons: {
     icon: "/favicon_io/favicon.ico",
     shortcut: "/favicon_io/favicon-32x32.png",

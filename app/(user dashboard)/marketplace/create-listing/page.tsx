@@ -131,6 +131,8 @@ function CreateListingForm() {
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);
+	const [phonePrefix, setPhonePrefix] = useState("+1");
+	const [whatsappPrefix, setWhatsappPrefix] = useState("+1");
 
 	const methods = useForm<Product>({
 		defaultValues: {
@@ -196,9 +198,9 @@ function CreateListingForm() {
 			formData.append("tags", selectedTags.join(","));
 
 			// Contact info
-			if (data.phoneNumber) formData.append("phoneNumber", data.phoneNumber);
+			if (data.phoneNumber) formData.append("phoneNumber", `${phonePrefix}${data.phoneNumber}`);
 			if (data.email) formData.append("email", data.email);
-			if (data.whatsappNumber) formData.append("whatsappNumber", data.whatsappNumber);
+			if (data.whatsappNumber) formData.append("whatsappNumber", `${whatsappPrefix}${data.whatsappNumber}`);
 
 			// Append photo files
 			if (data.photo && data.photo.length > 0) {
@@ -803,12 +805,20 @@ function CreateListingForm() {
 											<label className="block text-sm font-semibold mb-1">
 												Phone Number
 											</label>
-											<div className="flex items-center gap-0 rounded-lg px-3 py-1 bg-gray-100 border border-gray-200 focus-within:border-[var(--primary-color)] focus-within:ring-2 focus-within:ring-[var(--primary-color)]/20 transition-all duration-200">
+											<div className="flex items-center gap-2 rounded-lg pl-2 pr-3 py-1 bg-gray-100 border border-gray-200 focus-within:border-[var(--primary-color)] focus-within:ring-2 focus-within:ring-[var(--primary-color)]/20 transition-all duration-200">
 												<Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+												<select
+													value={phonePrefix}
+													onChange={(e) => setPhonePrefix(e.target.value)}
+													className="bg-transparent text-sm text-gray-700 font-medium focus:outline-none border-r border-gray-300 pr-2"
+												>
+													<option value="+1">+1 (US)</option>
+													<option value="+234">+234 (NG)</option>
+												</select>
 												<input
 													type="tel"
 													{...register("phoneNumber")}
-													className="flex-1 bg-transparent outline-none placeholder:text-gray-400"
+													className="flex-1 bg-transparent outline-none placeholder:text-gray-400 pl-1"
 													placeholder="Enter phone number"
 												/>
 											</div>
@@ -835,12 +845,20 @@ function CreateListingForm() {
 											<label className="block text-sm font-semibold mb-1">
 												WhatsApp Number
 											</label>
-											<div className="flex items-center gap-0 rounded-lg px-3 py-1 bg-gray-100 border border-gray-200 focus-within:border-[var(--primary-color)] focus-within:ring-2 focus-within:ring-[var(--primary-color)]/20 transition-all duration-200">
+											<div className="flex items-center gap-2 rounded-lg pl-2 pr-3 py-1 bg-gray-100 border border-gray-200 focus-within:border-[var(--primary-color)] focus-within:ring-2 focus-within:ring-[var(--primary-color)]/20 transition-all duration-200">
 												<MessageCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+												<select
+													value={whatsappPrefix}
+													onChange={(e) => setWhatsappPrefix(e.target.value)}
+													className="bg-transparent text-sm text-gray-700 font-medium focus:outline-none border-r border-gray-300 pr-2"
+												>
+													<option value="+1">+1 (US)</option>
+													<option value="+234">+234 (NG)</option>
+												</select>
 												<input
 													type="tel"
 													{...register("whatsappNumber")}
-													className="flex-1 bg-transparent outline-none placeholder:text-gray-400"
+													className="flex-1 bg-transparent outline-none placeholder:text-gray-400 pl-1"
 													placeholder="Enter WhatsApp number"
 												/>
 											</div>

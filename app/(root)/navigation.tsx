@@ -49,7 +49,7 @@ export default function Navbar() {
               <li key={href}>
                 <Link
                   href={href}
-                  className="px-4 py-8 inline-block hover:text-[#037244] transition-colors"
+                  className="px-4 py-5 inline-block hover:text-[#037244] transition-colors"
                 >
                   {label}
                 </Link>
@@ -63,6 +63,12 @@ export default function Navbar() {
             className="hidden md:inline-block bg-gradient-to-r from-[#037244] to-[#04C977] text-white px-5 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
           >
             Join Us +
+          </Link>
+          <Link
+            href="/feeds?action=signin"
+            className="hidden md:inline-block border border-[#037244] text-[#037244] bg-white px-5 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition-all"
+          >
+            Sign In
           </Link>
         </div>
 
@@ -86,9 +92,8 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       <aside
-        className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${
-          isMobileOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${isMobileOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="flex justify-between items-center p-4 border-b">
           <Image
@@ -123,6 +128,13 @@ export default function Navbar() {
             className="w-full text-center bg-gradient-to-r from-[#037244] to-[#04C977] text-white px-4 py-2 rounded-lg block font-medium shadow-md hover:shadow-lg transition-all"
           >
             Join Us +
+          </Link>
+          <Link
+            href="/feeds?action=signin"
+            onClick={handleClose}
+            className="w-full text-center border border-[#037244] text-[#037244] bg-white px-4 py-2 mt-3 rounded-lg block font-medium shadow-sm hover:bg-gray-50 transition-all"
+          >
+            Sign In
           </Link>
         </div>
       </aside>
