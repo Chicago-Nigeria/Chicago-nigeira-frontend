@@ -14,7 +14,7 @@ import ConfirmationModal from "./ConfirmationModal";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import StripeCheckout from "@/app/components/StripeCheckout";
-import { downloadCalendarInvite, type CalendarEventData } from "@/app/libs/helper/calendar";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Initialize Stripe
 const stripePromise = loadStripe(
@@ -35,6 +35,7 @@ type TicketFormData = z.infer<typeof ticketSchema>;
 interface TicketRegistrationModalProps {
 	event: any;
 	onClose: () => void;
+	onRegistrationSuccess?: () => void;
 }
 
 interface PriceBreakdown {
@@ -48,9 +49,11 @@ interface PriceBreakdown {
 export default function TicketRegistrationModal({
 	event,
 	onClose,
+	onRegistrationSuccess,
 }: TicketRegistrationModalProps) {
 	const { user } = useSession((state) => state);
 	const { requireAuth } = useAuthGuard();
+	const queryClient = useQueryClient();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showConfirmation, setShowConfirmation] = useState(false);
 	const [registeredEvent, setRegisteredEvent] = useState<any>(null);
@@ -90,17 +93,6 @@ export default function TicketRegistrationModal({
 	}, [user, setValue]);
 
 	const quantity = watch("quantity") || 1;
-
-	const autoAddToCalendar = (registeredEventData: CalendarEventData) => {
-		if (typeof window === "undefined") return;
-		const eventUrl = registeredEventData?.id
-			? `${window.location.origin}/events/${registeredEventData.id}`
-			: undefined;
-		const inviteCreated = downloadCalendarInvite(registeredEventData, eventUrl);
-		if (inviteCreated) {
-			toast.success("Calendar invite downloaded.");
-		}
-	};
 
 	// Fetch price breakdown when quantity changes (for paid events)
 	useEffect(() => {
@@ -157,7 +149,8 @@ export default function TicketRegistrationModal({
 					// Show confirmation modal
 					setRegisteredEvent(registeredEventData);
 					setShowConfirmation(true);
-					autoAddToCalendar(registeredEventData);
+					onRegistrationSuccess?.();
+					void queryClient.invalidateQueries({ queryKey: ["attending-events"] });
 				} else {
 					// Paid event - create payment intent
 					const payload = {
@@ -215,7 +208,8 @@ export default function TicketRegistrationModal({
 			toast.success("Ticket purchased successfully!");
 			setRegisteredEvent(event);
 			setShowConfirmation(true);
-			autoAddToCalendar(event);
+			onRegistrationSuccess?.();
+			void queryClient.invalidateQueries({ queryKey: ["attending-events"] });
 		} catch (error: any) {
 			toast.error(error.message || "Failed to confirm payment");
 		}

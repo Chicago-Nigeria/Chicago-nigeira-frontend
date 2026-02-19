@@ -4,8 +4,22 @@ import { useQuery } from "@tanstack/react-query";
 import EventCard from "./eventCard";
 import { callApi } from "@/app/libs/helper/callApi";
 import { ApiResponse } from "@/app/types";
-import { EventCardData } from "@/app/types";
 import { Calendar } from "lucide-react";
+import { useSession } from "@/app/store/useSession";
+
+type AttendingEventLite = {
+	id: string;
+};
+
+type EventListItem = {
+	id?: string;
+	category?: string;
+	title?: string;
+	description?: string;
+	location?: string;
+	status?: string;
+	[key: string]: unknown;
+};
 
 // Skeleton component
 function EventCardSkeleton() {
@@ -32,10 +46,12 @@ interface EventsListProps {
 }
 
 export default function EventsList({ selectedCategory, searchQuery }: EventsListProps) {
-	const { data, isLoading, isFetching, error } = useQuery({
+	const { user } = useSession((state) => state);
+
+	const { data, isLoading, error } = useQuery({
 		queryKey: ["events"],
 		queryFn: async () => {
-			const response = await callApi<ApiResponse<any[]>>(
+			const response = await callApi<ApiResponse<EventListItem[]>>(
 				"/events",
 				"GET"
 			);
@@ -50,6 +66,28 @@ export default function EventsList({ selectedCategory, searchQuery }: EventsList
 		refetchOnWindowFocus: true, // Refetch when window regains focus
 		refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes in background
 	});
+
+	const { data: attendingEvents = [] } = useQuery({
+		queryKey: ["attending-events"],
+		queryFn: async () => {
+			const response = await callApi<ApiResponse<AttendingEventLite[]>>(
+				"/events/user/attending",
+				"GET"
+			);
+			if (response.error) {
+				throw new Error(response.error.message);
+			}
+			return response.data?.data || [];
+		},
+		enabled: !!user,
+		staleTime: 60 * 1000,
+	});
+
+	const registeredEventIds = new Set(
+		attendingEvents
+			.map((item) => item?.id)
+			.filter((id): id is string => Boolean(id))
+	);
 
 	// Filter events by category and search query
 	const filteredEvents = data?.filter((event) => {
@@ -103,7 +141,11 @@ export default function EventsList({ selectedCategory, searchQuery }: EventsList
 	return (
 		<>
 			{filteredEvents.map((event, index) => (
-				<EventCard key={event.id || index} event={event} />
+				<EventCard
+					key={event.id || index}
+					event={event}
+					isRegistered={registeredEventIds.has(event.id)}
+				/>
 			))}
 		</>
 	);

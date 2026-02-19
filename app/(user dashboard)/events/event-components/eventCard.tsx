@@ -3,18 +3,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Calendar, Clock, MapPin, Infinity, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TicketRegistrationModal from "./TicketRegistrationModal";
 import { useAuthGuard } from "@/app/hooks/useAuthGuard";
 import ShareButton from "../../components/shareButton";
 
 interface EventCardProps {
 	event: any; // Will be properly typed once backend response is confirmed
+	isRegistered?: boolean;
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, isRegistered = false }: EventCardProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [hasRegistered, setHasRegistered] = useState(isRegistered);
 	const { requireAuth } = useAuthGuard();
+
+	useEffect(() => {
+		setHasRegistered(isRegistered);
+	}, [isRegistered]);
 
 	// Handle get ticket button click - require authentication
 	const handleGetTicket = () => {
@@ -196,7 +202,11 @@ export default function EventCard({ event }: EventCardProps) {
 							{/* Right - Get Ticket Button (Centered) */}
 							{isPastEvent ? (
 								<span className="px-6 py-2.5 bg-gray-200 text-gray-500 text-sm font-semibold rounded-lg self-center cursor-not-allowed">
-									Registration Closed
+									Closed
+								</span>
+							) : hasRegistered ? (
+								<span className="px-6 py-2.5 bg-emerald-100 text-emerald-700 text-sm font-semibold rounded-lg self-center cursor-not-allowed">
+									Registered
 								</span>
 							) : (
 								<button
@@ -216,6 +226,7 @@ export default function EventCard({ event }: EventCardProps) {
 				<TicketRegistrationModal
 					event={event}
 					onClose={() => setIsModalOpen(false)}
+					onRegistrationSuccess={() => setHasRegistered(true)}
 				/>
 			)}
 		</>

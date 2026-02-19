@@ -5,7 +5,6 @@ import {
 	Calendar,
 	Clock,
 	MapPin,
-	User,
 	Infinity,
 	Ticket,
 	Loader2,
@@ -15,17 +14,48 @@ import Link from "next/link";
 import ShareButton from "../../components/shareButton";
 import { useParams } from "next/navigation";
 import { useGetEventById } from "@/app/hooks/useEvent";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TicketRegistrationModal from "../event-components/TicketRegistrationModal";
 import { useAuthGuard } from "@/app/hooks/useAuthGuard";
+import { useSession } from "@/app/store/useSession";
+import { useQuery } from "@tanstack/react-query";
+import { callApi } from "@/app/libs/helper/callApi";
+import { ApiResponse } from "@/app/types";
+
+type AttendingEventLite = {
+	id: string;
+};
 
 export default function EventDetail() {
 	const { id } = useParams();
 	const { requireAuth } = useAuthGuard();
+	const { user } = useSession((state) => state);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [hasRegistered, setHasRegistered] = useState(false);
 
 	const { data, isLoading, error } = useGetEventById(id as string);
 	const event = data?.data?.data;
+
+	const { data: attendingEvents = [] } = useQuery({
+		queryKey: ["attending-events"],
+		queryFn: async () => {
+			const response = await callApi<ApiResponse<AttendingEventLite[]>>(
+				"/events/user/attending",
+				"GET"
+			);
+			if (response.error) {
+				throw new Error(response.error.message);
+			}
+			return response.data?.data || [];
+		},
+		enabled: !!user,
+		staleTime: 60 * 1000,
+	});
+
+	useEffect(() => {
+		if (!event?.id) return;
+		setHasRegistered(attendingEvents.some((item) => item?.id === event.id));
+	}, [attendingEvents, event?.id]);
 
 	// Check if event is in the past
 	const isEventPast = () => {
@@ -42,21 +72,10 @@ export default function EventDetail() {
 	const isPastEvent = event ? isEventPast() : false;
 
 	const handleGetTicket = () => {
-		if (isPastEvent) return;
+		if (isPastEvent || hasRegistered) return;
 		requireAuth(() => {
 			setIsModalOpen(true);
 		}, "register for this event");
-	};
-
-	// Format date
-	const formatDate = (dateStr: string) => {
-		const date = new Date(dateStr);
-		return date.toLocaleDateString("en-US", {
-			weekday: "long",
-			month: "long",
-			day: "numeric",
-			year: "numeric",
-		});
 	};
 
 	// Format short date
@@ -294,6 +313,10 @@ export default function EventDetail() {
 							<span className="block w-full py-3 bg-gray-200 text-gray-500 text-center font-semibold rounded-lg cursor-not-allowed">
 								Registration Closed
 							</span>
+						) : hasRegistered ? (
+							<span className="block w-full py-3 bg-emerald-100 text-emerald-700 text-center font-semibold rounded-lg cursor-not-allowed">
+								Already Registered
+							</span>
 						) : (
 							<button
 								onClick={handleGetTicket}
@@ -347,6 +370,10 @@ export default function EventDetail() {
 							<span className="block w-full py-3 bg-gray-200 text-gray-500 text-center font-semibold rounded-lg cursor-not-allowed">
 								Registration Closed
 							</span>
+						) : hasRegistered ? (
+							<span className="block w-full py-3 bg-emerald-100 text-emerald-700 text-center font-semibold rounded-lg cursor-not-allowed">
+								Already Registered
+							</span>
 						) : (
 							<button
 								onClick={handleGetTicket}
@@ -388,6 +415,7 @@ export default function EventDetail() {
 				<TicketRegistrationModal
 					event={event}
 					onClose={() => setIsModalOpen(false)}
+					onRegistrationSuccess={() => setHasRegistered(true)}
 				/>
 			)}
 		</>

@@ -86,14 +86,6 @@ const toUtcCalendarString = (date: Date) => {
 	);
 };
 
-const sanitizeIcsText = (value: string) => {
-	return value
-		.replace(/\\/g, "\\\\")
-		.replace(/\n/g, "\\n")
-		.replace(/,/g, "\\,")
-		.replace(/;/g, "\\;");
-};
-
 const getEventLocation = (event: CalendarEventData) => {
 	const venue = event.venue?.trim();
 	const location = event.location?.trim();
@@ -140,51 +132,4 @@ export const buildGoogleCalendarUrl = (event: CalendarEventData, eventUrl?: stri
 	});
 
 	return `https://calendar.google.com/calendar/render?${params.toString()}`;
-};
-
-export const downloadCalendarInvite = (event: CalendarEventData, eventUrl?: string) => {
-	if (typeof window === "undefined" || typeof document === "undefined") return false;
-
-	const range = buildDateRange(event);
-	if (!range) return false;
-
-	const nowStamp = toUtcCalendarString(new Date());
-	const safeTitle = (event.title || "event").replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "");
-	const uidBase = event.id || `${Date.now()}`;
-	const uid = `${uidBase}@chicago-nigeria`;
-	const details = getEventDetailsText(event, eventUrl);
-	const location = getEventLocation(event);
-
-	const icsLines = [
-		"BEGIN:VCALENDAR",
-		"VERSION:2.0",
-		"PRODID:-//Chicago Nigeria//Event Registration//EN",
-		"CALSCALE:GREGORIAN",
-		"METHOD:PUBLISH",
-		"BEGIN:VEVENT",
-		`UID:${uid}`,
-		`DTSTAMP:${nowStamp}`,
-		`DTSTART:${toUtcCalendarString(range.start)}`,
-		`DTEND:${toUtcCalendarString(range.end)}`,
-		`SUMMARY:${sanitizeIcsText(event.title || "Chicago Nigeria Event")}`,
-		`LOCATION:${sanitizeIcsText(location)}`,
-		details ? `DESCRIPTION:${sanitizeIcsText(details)}` : "",
-		"END:VEVENT",
-		"END:VCALENDAR",
-	].filter(Boolean);
-
-	const blob = new Blob([icsLines.join("\r\n")], {
-		type: "text/calendar;charset=utf-8",
-	});
-	const downloadUrl = URL.createObjectURL(blob);
-
-	const anchor = document.createElement("a");
-	anchor.href = downloadUrl;
-	anchor.download = `${safeTitle || "event"}-invite.ics`;
-	document.body.appendChild(anchor);
-	anchor.click();
-	document.body.removeChild(anchor);
-	window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
-
-	return true;
 };

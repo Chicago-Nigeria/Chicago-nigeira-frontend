@@ -2,10 +2,8 @@
 
 import { useEffect } from "react";
 import { X, CheckCircle, Calendar, MapPin, Clock } from "lucide-react";
-import { toast } from "sonner";
 import {
 	buildGoogleCalendarUrl,
-	downloadCalendarInvite,
 	type CalendarEventData,
 } from "@/app/libs/helper/calendar";
 
@@ -18,7 +16,11 @@ export default function ConfirmationModal({
 	event,
 	onClose,
 }: ConfirmationModalProps) {
-	const googleCalendarUrl = buildGoogleCalendarUrl(event);
+	const eventUrl =
+		typeof window !== "undefined" && event?.id
+			? `${window.location.origin}/events/${event.id}`
+			: undefined;
+	const googleCalendarUrl = buildGoogleCalendarUrl(event, eventUrl);
 
 	// Format date
 	const formatDate = (dateStr?: string | Date | null) => {
@@ -52,21 +54,6 @@ export default function ConfirmationModal({
 		return event.location || event.venue || "Location TBA";
 	};
 
-	const handleAddToCalendar = () => {
-		const eventUrl =
-			typeof window !== "undefined" && event?.id
-				? `${window.location.origin}/events/${event.id}`
-				: undefined;
-
-		const inviteCreated = downloadCalendarInvite(event, eventUrl);
-		if (!inviteCreated) {
-			toast.error("Could not create calendar invite for this event.");
-			return;
-		}
-
-		toast.success("Calendar invite downloaded.");
-	};
-
 	// Close modal on Escape key
 	useEffect(() => {
 		const handleEscape = (e: KeyboardEvent) => {
@@ -86,11 +73,11 @@ export default function ConfirmationModal({
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+			className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm"
 			onClick={onClose}
 		>
 			<div
-				className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+				className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100dvh-88px)] sm:max-h-[90vh] flex flex-col"
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Header with close button */}
@@ -118,7 +105,7 @@ export default function ConfirmationModal({
 				</div>
 
 				{/* Event Details */}
-				<div className="px-6 pb-6">
+				<div className="flex-1 overflow-y-auto px-6 py-6">
 					{/* Event Banner
 					{event.coverImage && (
 						<div className="relative h-40 w-full rounded-lg overflow-hidden mb-4">
@@ -172,40 +159,34 @@ export default function ConfirmationModal({
 							</p>
 						</div> */}
 
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
-							<button
-								onClick={handleAddToCalendar}
-								className="px-4 py-2.5 text-sm font-semibold rounded-lg border border-[var(--primary-color)] text-[var(--primary-color)] hover:bg-[var(--primary-color)]/5 transition-colors"
-							>
-								Add to Calendar (.ics)
-							</button>
 							{googleCalendarUrl ? (
 								<a
 									href={googleCalendarUrl}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="px-4 py-2.5 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-center"
+									className="w-full inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors mt-6"
 								>
-									Google Calendar
+									Add to Google Calendar
 								</a>
 							) : (
 								<button
 									disabled
-									className="px-4 py-2.5 text-sm font-semibold rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed"
+									className="w-full inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed mt-6"
 								>
-									Google Calendar
+									Add to Google Calendar
 								</button>
 							)}
-						</div>
-
-						{/* Close Button */}
-						<button
-							onClick={onClose}
-							className="w-full mt-6 px-4 py-3 bg-[var(--primary-color)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors"
-						>
-							Done
-						</button>
 					</div>
+				</div>
+
+				{/* Footer CTA */}
+				<div className="border-t border-gray-200 px-6 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] bg-white">
+					<button
+						onClick={onClose}
+						className="w-full px-4 py-3 bg-[var(--primary-color)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors"
+					>
+						Done
+					</button>
 				</div>
 			</div>
 		</div>

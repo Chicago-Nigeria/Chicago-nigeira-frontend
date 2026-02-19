@@ -182,7 +182,13 @@ const fullName = (user: ChatUser) => `${user.firstName || ""} ${user.lastName ||
 
 const getApiStreamBase = () => {
   const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002/api";
-  return api.endsWith("/api") ? api.slice(0, -4) : api;
+  const normalizedApi = api.replace(/\/+$/, "");
+  return normalizedApi.endsWith("/api") ? normalizedApi.slice(0, -4) : normalizedApi;
+};
+
+const getStoredAccessToken = () => {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("accessToken") || "";
 };
 
 const createDraftConversation = (chatUser: ChatUser): Conversation => {
@@ -285,6 +291,9 @@ export default function MessagesPage() {
   const draftConversationUserRef = useRef<ChatUser | null>(null);
   const deepLinkHandledForRef = useRef<string | null>(null);
   const deepLinkResolvingForRef = useRef<string | null>(null);
+  const activeConversationIdRef = useRef<string | null>(null);
+  const sseReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sseReconnectAttemptsRef = useRef(0);
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.user.id === activeConversationId) || null,
@@ -318,6 +327,10 @@ export default function MessagesPage() {
   useEffect(() => {
     draftConversationUserRef.current = draftConversationUser;
   }, [draftConversationUser]);
+
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   useEffect(() => {
     return () => {
@@ -496,33 +509,57 @@ export default function MessagesPage() {
     [authUserId, markConversationAsRead, scrollToBottom]
   );
 
+  const cleanupSse = useCallback(() => {
+    if (sseReconnectTimerRef.current) {
+      clearTimeout(sseReconnectTimerRef.current);
+      sseReconnectTimerRef.current = null;
+    }
+    if (sseRef.current) {
+      sseRef.current.close();
+      sseRef.current = null;
+    }
+  }, []);
+
   const attachSse = useCallback(() => {
     if (!authUserId) return;
     if (sseRef.current) return;
 
     const streamBase = getApiStreamBase();
-    const source = new EventSource(`${streamBase}/api/messages/stream`, {
+    const streamUrl = new URL(`${streamBase}/api/messages/stream`);
+    const accessToken = getStoredAccessToken();
+    if (accessToken) {
+      streamUrl.searchParams.set("accessToken", accessToken);
+    }
+
+    const source = new EventSource(streamUrl.toString(), {
       withCredentials: true,
     });
 
+    source.onopen = () => {
+      sseReconnectAttemptsRef.current = 0;
+      setStreamConnected(true);
+    };
+
     source.addEventListener("connected", () => {
+      sseReconnectAttemptsRef.current = 0;
       setStreamConnected(true);
     });
 
     source.addEventListener("message:new", (event) => {
       try {
         const payload = JSON.parse((event as MessageEvent).data) as ChatMessage;
+        const currentActiveId = activeConversationIdRef.current;
 
         setConversations((prev) =>
-          upsertConversationFromMessage(prev, payload, authUserId, activeConversationId)
+          upsertConversationFromMessage(prev, payload, authUserId, currentActiveId)
         );
 
         const otherUserId = payload.senderId === authUserId ? payload.receiverId : payload.senderId;
-        if (draftConversationUser?.id === otherUserId) {
+        if (draftConversationUserRef.current?.id === otherUserId) {
           draftConversationUserRef.current = null;
           setDraftConversationUser(null);
         }
-        if (activeConversationId === otherUserId) {
+        if (currentActiveId === otherUserId) {
           setMessages((prev) => {
             if (prev.some((msg) => msg.id === payload.id)) return prev;
             return [...prev, payload].sort(
@@ -569,10 +606,22 @@ export default function MessagesPage() {
 
     source.onerror = () => {
       setStreamConnected(false);
+      // Close the failed connection and schedule a reconnect with backoff
+      if (sseRef.current) {
+        sseRef.current.close();
+        sseRef.current = null;
+      }
+      const attempts = sseReconnectAttemptsRef.current;
+      const delay = Math.min(2000 * Math.pow(2, attempts), 30000);
+      sseReconnectAttemptsRef.current = attempts + 1;
+      sseReconnectTimerRef.current = setTimeout(() => {
+        sseReconnectTimerRef.current = null;
+        attachSse();
+      }, delay);
     };
 
     sseRef.current = source;
-  }, [activeConversationId, authUserId, draftConversationUser?.id, markConversationAsRead, scrollToBottom]);
+  }, [authUserId, markConversationAsRead, scrollToBottom]);
 
   useEffect(() => {
     if (!authUserId) return;
@@ -586,10 +635,9 @@ export default function MessagesPage() {
 
     return () => {
       clearInterval(interval);
-      sseRef.current?.close();
-      sseRef.current = null;
+      cleanupSse();
     };
-  }, [attachSse, authUserId, fetchConversations]);
+  }, [attachSse, authUserId, fetchConversations, cleanupSse]);
 
   useEffect(() => {
     if (!activeConversationId) return;
