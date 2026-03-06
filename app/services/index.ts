@@ -244,6 +244,57 @@ export namespace AdminBlog {
   };
 }
 
+// Message namespace
+export namespace Message {
+  export const getUnreadCount = () => {
+    return callApi<{ success: boolean; count: number }>(`/messages/unread-count`);
+  };
+}
+
+// Notification namespace
+export namespace Notification {
+  export interface INotification {
+    id: string;
+    type: string;
+    title: string;
+    message: string;
+    link: string | null;
+    isRead: boolean;
+    userId: string;
+    createdAt: string;
+  }
+
+  export interface NotificationsResponse {
+    success: boolean;
+    data: INotification[];
+    unreadCount: number;
+    meta: { page: number; limit: number };
+  }
+
+  export const getAll = (params?: { page?: number; limit?: number }) => {
+    const queryString = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined)
+            .map(([k, v]) => [k, String(v)])
+        ).toString()
+      : "";
+    return callApi<NotificationsResponse>(`/notifications?${queryString}`);
+  };
+
+  export const getUnreadCount = () => {
+    return callApi<{ success: boolean; count: number }>(`/notifications/unread-count`);
+  };
+
+  export const markAsRead = (id: string) => {
+    return callApi<{ success: boolean; data: INotification }>(`/notifications/${id}/read`, "PUT");
+  };
+
+  export const markAllAsRead = () => {
+    return callApi<{ success: boolean; message: string }>(`/notifications/read-all`, "PUT");
+  };
+}
+
 // Admin Promoted Content namespace
 export namespace AdminPromoted {
   export const getAll = (params?: { page?: number; limit?: number; contentType?: string; isActive?: string }) => {

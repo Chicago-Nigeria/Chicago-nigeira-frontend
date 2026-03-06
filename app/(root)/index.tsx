@@ -655,7 +655,7 @@ export default function Index() {
               >
                 <Link
                   className="bg-linear-to-r from-[#037244] to-[#04C977] text-white inline-block px-4 py-1 rounded-lg mt-12"
-                  href={"/vendors"}
+                  href={"/social-media-subscription"}
                 >
                   Get started for $65/month
                 </Link>

@@ -127,7 +127,7 @@ export default function SignUpModalContent({
 
 	const onSubmit = async (data: SimplifiedSignupSchema) => {
 		if (step === 1) {
-			handleNext();
+			await handleNext();
 			return;
 		}
 
@@ -201,7 +201,7 @@ export default function SignUpModalContent({
 				/>
 			</div>
 
-			
+
 
 			{/* Step 1: Personal Information */}
 			{step === 1 && (

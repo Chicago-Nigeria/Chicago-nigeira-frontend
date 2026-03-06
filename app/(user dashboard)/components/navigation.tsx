@@ -13,16 +13,20 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import Badge from "./badge";
 import MobileNavigation from "./mobilenav";
+import { Message, Notification } from "@/app/services";
+import { useSession } from "@/app/store/useSession";
 
 export type NavItem = {
 	href: string;
 	label: string;
-	icon: LucideIcon; // all lucide icons share this type
+	icon: LucideIcon;
 	badge?: number;
 };
-const navItems: NavItem[] = [
+
+const baseNavItems: NavItem[] = [
 	{ href: "/feeds", label: "Feeds", icon: Home },
 	{ href: "/events", label: "Events", icon: Calendar },
 	{ href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
@@ -31,12 +35,47 @@ const navItems: NavItem[] = [
 	{ href: "/notifications", label: "Notifications", icon: Bell },
 	{ href: "/settings", label: "Settings", icon: Settings },
 ];
+
 export default function SideNavigation({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
 	const pathname = usePathname();
+	const { user } = useSession((s) => s);
+	const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+	const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+
+	useEffect(() => {
+		if (!user) return;
+
+		const fetchCounts = async () => {
+			const [notifRes, msgRes] = await Promise.all([
+				Notification.getUnreadCount(),
+				Message.getUnreadCount(),
+			]);
+			if (notifRes.data) setUnreadNotifCount(notifRes.data.count);
+			if (msgRes.data) setUnreadMsgCount(msgRes.data.count);
+		};
+
+		fetchCounts();
+		const interval = setInterval(fetchCounts, 30_000);
+		return () => clearInterval(interval);
+	}, [user]);
+
+	// Clear badges when on the respective pages
+	useEffect(() => {
+		if (pathname.startsWith("/notifications")) setUnreadNotifCount(0);
+		if (pathname.startsWith("/messages")) setUnreadMsgCount(0);
+	}, [pathname]);
+
+	const navItems = baseNavItems.map((item) => {
+		if (item.href === "/notifications" && unreadNotifCount > 0)
+			return { ...item, badge: unreadNotifCount };
+		if (item.href === "/messages" && unreadMsgCount > 0)
+			return { ...item, badge: unreadMsgCount };
+		return item;
+	});
 
 	// Filter out notifications and settings for mobile navigation
 	const mobileNavItems = navItems.filter(

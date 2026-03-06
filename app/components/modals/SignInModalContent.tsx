@@ -100,7 +100,7 @@ export default function SignInModalContent({
 
 	const onSubmit = async (formData: SignInFormData) => {
 		if (step === 1) {
-			handleSendOTP();
+			await handleSendOTP();
 			return;
 		}
 

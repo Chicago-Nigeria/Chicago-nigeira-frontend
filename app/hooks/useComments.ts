@@ -27,10 +27,14 @@ export const useAddComment = () => {
     onSuccess: (result, { postId }) => {
       toast.success("Comment added");
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
-      // Update comment count in posts list
-      queryClient.setQueryData(["posts"], (old: unknown) => {
+
+      const newCount = result.data?.commentCount;
+
+      // Helper to patch _count.comments in an infinite-query pages structure
+      const patchPages = (old: unknown) => {
         if (!old) return old;
         const oldData = old as { pages: Array<{ data: { data: IPost[] } }> };
+        if (!oldData.pages) return old;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -39,21 +43,20 @@ export const useAddComment = () => {
               ...page.data,
               data: page.data?.data?.map((post: IPost) =>
                 post.id === postId
-                  ? {
-                      ...post,
-                      _count: {
-                        ...post._count,
-                        comments:
-                          result.data?.commentCount ?? post._count.comments + 1,
-                      },
-                    }
+                  ? { ...post, _count: { ...post._count, comments: newCount ?? post._count.comments + 1 } }
                   : post
               ),
             },
           })),
         };
-      });
-      // Update single post comment count
+      };
+
+      // Update all three feed filter caches
+      queryClient.setQueryData(["posts", "all"], patchPages);
+      queryClient.setQueryData(["posts", "following"], patchPages);
+      queryClient.setQueryData(["posts", "blogs"], patchPages);
+
+      // Update single post page cache
       queryClient.setQueryData(["post", postId], (old: unknown) => {
         if (!old) return old;
         const oldData = old as { data: { data: IPost } };
@@ -64,12 +67,7 @@ export const useAddComment = () => {
             ...oldData.data,
             data: {
               ...oldData.data.data,
-              _count: {
-                ...oldData.data.data._count,
-                comments:
-                  result.data?.commentCount ??
-                  oldData.data.data._count.comments + 1,
-              },
+              _count: { ...oldData.data.data._count, comments: newCount ?? oldData.data.data._count.comments + 1 },
             },
           },
         };
@@ -97,10 +95,13 @@ export const useDeleteComment = () => {
     onSuccess: (result, { postId }) => {
       toast.success("Comment deleted");
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
-      // Update comment count
-      queryClient.setQueryData(["posts"], (old: unknown) => {
+
+      const newCount = result.data?.data?.commentCount;
+
+      const patchPages = (old: unknown) => {
         if (!old) return old;
         const oldData = old as { pages: Array<{ data: { data: IPost[] } }> };
+        if (!oldData.pages) return old;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -109,21 +110,17 @@ export const useDeleteComment = () => {
               ...page.data,
               data: page.data?.data?.map((post: IPost) =>
                 post.id === postId
-                  ? {
-                      ...post,
-                      _count: {
-                        ...post._count,
-                        comments:
-                          result.data?.data?.commentCount ??
-                          post._count.comments - 1,
-                      },
-                    }
+                  ? { ...post, _count: { ...post._count, comments: newCount ?? Math.max(0, post._count.comments - 1) } }
                   : post
               ),
             },
           })),
         };
-      });
+      };
+
+      queryClient.setQueryData(["posts", "all"], patchPages);
+      queryClient.setQueryData(["posts", "following"], patchPages);
+      queryClient.setQueryData(["posts", "blogs"], patchPages);
     },
     onError: () => {
       toast.error("Failed to delete comment");

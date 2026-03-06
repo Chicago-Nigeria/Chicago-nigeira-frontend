@@ -4,11 +4,12 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Bell, Menu, Search, X, User, Settings as SettingsIcon, LogOut, ChevronDown } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Badge from "./badge";
 import { useSession } from "@/app/store/useSession";
 import { useAuthModal } from "@/app/store/useAuthModal";
 import { callApi } from "@/app/libs/helper/callApi";
+import { Notification } from "@/app/services";
 
 const NAV_LINKS = [
 	{ name: "Home", href: "/" },
@@ -22,8 +23,10 @@ const NAV_LINKS = [
 export default function TopNavigation() {
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
+	const [unreadCount, setUnreadCount] = useState(0);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
+	const pathname = usePathname();
 	const { user } = useSession((state) => state);
 	const { clearSession } = useSession((state) => state.actions);
 	const { openSignIn, openSignUp } = useAuthModal((state) => state.actions);
@@ -51,6 +54,24 @@ export default function TopNavigation() {
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [dropdownOpen]);
+
+	useEffect(() => {
+		if (!user) return;
+		const fetchCount = async () => {
+			const { data } = await Notification.getUnreadCount();
+			if (data) setUnreadCount(data.count);
+		};
+		fetchCount();
+		const interval = setInterval(fetchCount, 30_000);
+		return () => clearInterval(interval);
+	}, [user]);
+
+	// Clear badge when navigating to notifications page
+	useEffect(() => {
+		if (pathname?.startsWith("/notifications")) {
+			setUnreadCount(0);
+		}
+	}, [pathname]);
 
 	const handleLogout = async () => {
 		try {
@@ -97,8 +118,13 @@ export default function TopNavigation() {
 					{user ? (
 						<>
 							{/* Notification */}
-							<Link href="/notifications" className="relative">
+							<Link href="/notifications" className="relative lg:hidden">
 								<Bell className="w-5 h-5" aria-label="Notifications" />
+								{unreadCount > 0 && (
+									<span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full leading-none">
+										{unreadCount > 9 ? "9+" : unreadCount}
+									</span>
+								)}
 							</Link>
 
 							{/* Profile dropdown */}

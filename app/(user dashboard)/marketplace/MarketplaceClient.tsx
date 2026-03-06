@@ -20,6 +20,7 @@ import { Suspense, useState, useRef, useEffect, useMemo, useCallback } from "rea
 import MarketplaceProductsSkeleton from "./components/skeletons/product-skeleton";
 import MarketplaceSidebar from "./components/client/MarketplaceSidebar";
 import MarketplaceProducts from "./components/server/prod";
+import SubscriptionBanner from "@/app/components/SubscriptionBanner";
 import { callApi } from "@/app/libs/helper/callApi";
 import { ApiResponse } from "@/app/types";
 import { ListingFilters } from "@/app/hooks/useListing";
@@ -175,6 +176,9 @@ export default function Marketplace() {
 						</div>
 					))}
 				</div>
+
+				{/* Subscription Promo Banner */}
+				<SubscriptionBanner />
 
 				{/* Search, Categories & Filters Combined */}
 				<div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">

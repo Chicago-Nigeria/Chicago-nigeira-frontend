@@ -122,6 +122,29 @@ type MessageReadEvent = {
   readAt: string;
 };
 
+type ThreadCacheEntry = {
+  messages: ChatMessage[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  savedAt: string;
+};
+
+type PersistedMessagesState = {
+  version: number;
+  savedAt: string;
+  conversations: Conversation[];
+  draftConversationUser: ChatUser | null;
+  activeConversationId: string | null;
+  isMobileChatView: boolean;
+  threads: Record<string, ThreadCacheEntry>;
+};
+
+const MESSAGES_CACHE_VERSION = 1;
+const MESSAGES_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
+const MAX_PERSISTED_THREADS = 12;
+const MAX_PERSISTED_MESSAGES_PER_THREAD = 120;
+const getMessagesCacheKey = (userId: string) => `messages-page-cache:${userId}`;
+
 const formatTime = (value: string) =>
   new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
@@ -138,6 +161,9 @@ const formatRelative = (value: string) => {
   if (diff < day) return `${Math.floor(diff / hour)}h ago`;
   return new Date(value).toLocaleDateString();
 };
+
+const sortByCreatedAt = (items: ChatMessage[]) =>
+  [...items].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
 const getMessageDayKey = (value: string) => {
   const date = new Date(value);
@@ -284,10 +310,13 @@ export default function MessagesPage() {
   const [streamConnected, setStreamConnected] = useState(false);
   const [isMobileChatView, setIsMobileChatView] = useState(false);
   const [expandedImageUrl, setExpandedImageUrl] = useState<string | null>(null);
+  const [storageHydrated, setStorageHydrated] = useState(false);
+  const [restoredFromCache, setRestoredFromCache] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const sseRef = useRef<EventSource | null>(null);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
+  const threadCacheRef = useRef<Record<string, ThreadCacheEntry>>({});
   const draftConversationUserRef = useRef<ChatUser | null>(null);
   const deepLinkHandledForRef = useRef<string | null>(null);
   const deepLinkResolvingForRef = useRef<string | null>(null);
@@ -342,6 +371,164 @@ export default function MessagesPage() {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  const writeThreadCache = useCallback(
+    (conversationId: string, thread: { messages: ChatMessage[]; nextCursor: string | null; hasMore: boolean }) => {
+      if (!conversationId) return;
+
+      threadCacheRef.current[conversationId] = {
+        messages: sortByCreatedAt(thread.messages),
+        nextCursor: thread.nextCursor,
+        hasMore: thread.hasMore,
+        savedAt: new Date().toISOString(),
+      };
+    },
+    []
+  );
+
+  const hydrateThreadFromCache = useCallback((conversationId: string) => {
+    if (!conversationId) return false;
+
+    const cachedThread = threadCacheRef.current[conversationId];
+    if (!cachedThread) return false;
+
+    setMessages(cachedThread.messages || []);
+    setNextCursor(cachedThread.nextCursor || null);
+    setHasMore(!!cachedThread.hasMore);
+    setLoadingMessages(false);
+    return true;
+  }, []);
+
+  useEffect(() => {
+    if (!authUserId) {
+      threadCacheRef.current = {};
+      setStorageHydrated(false);
+      setRestoredFromCache(false);
+      return;
+    }
+
+    const cacheKey = getMessagesCacheKey(authUserId);
+    let restored = false;
+
+    try {
+      const rawCache = localStorage.getItem(cacheKey);
+      if (!rawCache) {
+        setStorageHydrated(true);
+        setRestoredFromCache(false);
+        return;
+      }
+
+      const parsedCache = JSON.parse(rawCache) as PersistedMessagesState;
+      const isVersionValid = parsedCache?.version === MESSAGES_CACHE_VERSION;
+      const cacheAgeMs = Date.now() - new Date(parsedCache?.savedAt || 0).getTime();
+      const isFresh = Number.isFinite(cacheAgeMs) && cacheAgeMs <= MESSAGES_CACHE_TTL_MS;
+
+      if (!isVersionValid || !isFresh) {
+        localStorage.removeItem(cacheKey);
+      } else {
+        const restoredThreads = Object.entries(parsedCache.threads || {}).reduce<Record<string, ThreadCacheEntry>>(
+          (acc, [conversationId, thread]) => {
+            if (!thread || !Array.isArray(thread.messages)) return acc;
+
+            acc[conversationId] = {
+              messages: sortByCreatedAt(thread.messages).slice(-MAX_PERSISTED_MESSAGES_PER_THREAD),
+              nextCursor: typeof thread.nextCursor === "string" ? thread.nextCursor : null,
+              hasMore: !!thread.hasMore,
+              savedAt: typeof thread.savedAt === "string" ? thread.savedAt : new Date().toISOString(),
+            };
+
+            return acc;
+          },
+          {}
+        );
+
+        threadCacheRef.current = restoredThreads;
+
+        const restoredDraftConversationUser = parsedCache.draftConversationUser || null;
+        draftConversationUserRef.current = restoredDraftConversationUser;
+        setDraftConversationUser(restoredDraftConversationUser);
+        setConversations(Array.isArray(parsedCache.conversations) ? parsedCache.conversations : []);
+
+        // Always start on the conversation list — don't auto-open any thread
+        setLoadingConversations(false);
+        restored = true;
+      }
+    } catch (error) {
+      console.error("Failed to restore message cache", error);
+    }
+
+    setRestoredFromCache(restored);
+    setStorageHydrated(true);
+  }, [authUserId]);
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+
+    writeThreadCache(activeConversationId, {
+      messages,
+      nextCursor,
+      hasMore,
+    });
+  }, [activeConversationId, hasMore, messages, nextCursor, writeThreadCache]);
+
+  useEffect(() => {
+    if (!authUserId || !storageHydrated) return;
+
+    if (activeConversationId) {
+      writeThreadCache(activeConversationId, {
+        messages,
+        nextCursor,
+        hasMore,
+      });
+    }
+
+    const nextThreads = Object.entries(threadCacheRef.current)
+      .sort(([, a], [, b]) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+      .slice(0, MAX_PERSISTED_THREADS)
+      .reduce<Record<string, ThreadCacheEntry>>((acc, [conversationId, thread]) => {
+        acc[conversationId] = {
+          messages: sortByCreatedAt(thread.messages)
+            .slice(-MAX_PERSISTED_MESSAGES_PER_THREAD)
+            .map((message) => ({
+              ...message,
+              sendState:
+                message.sendState === "sent" || message.sendState === "failed"
+                  ? message.sendState
+                  : undefined,
+              retryPayload: undefined,
+            })),
+          nextCursor: thread.nextCursor || null,
+          hasMore: !!thread.hasMore,
+          savedAt: thread.savedAt || new Date().toISOString(),
+        };
+        return acc;
+      }, {});
+
+    threadCacheRef.current = nextThreads;
+
+    const cachePayload: PersistedMessagesState = {
+      version: MESSAGES_CACHE_VERSION,
+      savedAt: new Date().toISOString(),
+      conversations,
+      draftConversationUser,
+      activeConversationId,
+      isMobileChatView,
+      threads: nextThreads,
+    };
+
+    localStorage.setItem(getMessagesCacheKey(authUserId), JSON.stringify(cachePayload));
+  }, [
+    activeConversationId,
+    authUserId,
+    conversations,
+    draftConversationUser,
+    hasMore,
+    isMobileChatView,
+    messages,
+    nextCursor,
+    storageHydrated,
+    writeThreadCache,
+  ]);
+
   const markConversationAsRead = useCallback(
     async (otherUserId: string) => {
       if (!otherUserId) return;
@@ -383,20 +570,30 @@ export default function MessagesPage() {
     setMessages([]);
     setHasMore(false);
     setNextCursor(null);
-  }, []);
+    setLoadingMessages(false);
+    writeThreadCache(chatUser.id, {
+      messages: [],
+      nextCursor: null,
+      hasMore: false,
+    });
+  }, [writeThreadCache]);
 
   const fetchConversations = useCallback(
-    async (searchValue = "") => {
+    async (searchValue = "", silent = false) => {
       if (!authUserId) return;
-      setLoadingConversations(true);
+      if (!silent) {
+        setLoadingConversations(true);
+      }
 
       const query = searchValue.trim() ? `?search=${encodeURIComponent(searchValue.trim())}` : "";
       const { data, error } = await callApi<ConversationsResponse>(`/messages${query}`, "GET");
 
       if (error) {
-        toast.error(error.message || "Failed to load conversations");
-        setConversations([]);
-        setLoadingConversations(false);
+        if (!silent) {
+          toast.error(error.message || "Failed to load conversations");
+          setConversations([]);
+          setLoadingConversations(false);
+        }
         return;
       }
 
@@ -422,7 +619,9 @@ export default function MessagesPage() {
         if (prev && mergedConversations.some((item) => item.user.id === prev)) return prev;
         return null;
       });
-      setLoadingConversations(false);
+      if (!silent) {
+        setLoadingConversations(false);
+      }
     },
     [authUserId]
   );
@@ -452,7 +651,9 @@ export default function MessagesPage() {
       );
 
       if (error) {
-        toast.error(error.message || "Failed to load messages");
+        if (!silent) {
+          toast.error(error.message || "Failed to load messages");
+        }
         if (!silent) setLoadingMessages(false);
         setLoadingMore(false);
         return;
@@ -473,9 +674,12 @@ export default function MessagesPage() {
         });
       }
 
-      setNextCursor(data?.meta?.nextCursor || null);
-      setHasMore(!!data?.meta?.hasMore);
+      const resolvedNextCursor = data?.meta?.nextCursor || null;
+      const resolvedHasMore = !!data?.meta?.hasMore;
+      setNextCursor(resolvedNextCursor);
+      setHasMore(resolvedHasMore);
 
+      let nextMessagesSnapshot: ChatMessage[] = [];
       setMessages((prev) => {
         if (!append) {
           const serverIds = new Set(incoming.map((msg) => msg.id));
@@ -486,15 +690,23 @@ export default function MessagesPage() {
             return isSameConversation && (msg.sendState === "sending" || msg.sendState === "failed");
           });
           const pendingWithoutDupes = localPending.filter((msg) => !serverIds.has(msg.id));
-          return [...incoming, ...pendingWithoutDupes].sort(
+          nextMessagesSnapshot = [...incoming, ...pendingWithoutDupes].sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
+          return nextMessagesSnapshot;
         }
         const existingIds = new Set(prev.map((msg) => msg.id));
         const merged = [...incoming.filter((msg) => !existingIds.has(msg.id)), ...prev];
-        return merged.sort(
+        nextMessagesSnapshot = merged.sort(
           (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
+        return nextMessagesSnapshot;
+      });
+
+      writeThreadCache(otherUserId, {
+        messages: nextMessagesSnapshot,
+        nextCursor: resolvedNextCursor,
+        hasMore: resolvedHasMore,
       });
 
       if (!silent) setLoadingMessages(false);
@@ -506,7 +718,7 @@ export default function MessagesPage() {
 
       await markConversationAsRead(otherUserId);
     },
-    [authUserId, markConversationAsRead, scrollToBottom]
+    [authUserId, markConversationAsRead, scrollToBottom, writeThreadCache]
   );
 
   const cleanupSse = useCallback(() => {
@@ -624,25 +836,32 @@ export default function MessagesPage() {
   }, [authUserId, markConversationAsRead, scrollToBottom]);
 
   useEffect(() => {
-    if (!authUserId) return;
+    if (!authUserId || !storageHydrated) return;
 
-    void fetchConversations();
+    void fetchConversations("", restoredFromCache);
     attachSse();
 
     const interval = setInterval(() => {
-      void fetchConversations();
+      void fetchConversations("", true);
     }, 30000);
 
     return () => {
       clearInterval(interval);
       cleanupSse();
     };
-  }, [attachSse, authUserId, fetchConversations, cleanupSse]);
+  }, [attachSse, authUserId, cleanupSse, fetchConversations, restoredFromCache, storageHydrated]);
 
   useEffect(() => {
-    if (!activeConversationId) return;
+    if (!activeConversationId || !storageHydrated) return;
+
+    const hasCachedThread = hydrateThreadFromCache(activeConversationId);
+    if (hasCachedThread) {
+      void fetchMessages(activeConversationId, null, false, true);
+      return;
+    }
+
     void fetchMessages(activeConversationId);
-  }, [activeConversationId, fetchMessages]);
+  }, [activeConversationId, fetchMessages, hydrateThreadFromCache, storageHydrated]);
 
   useEffect(() => {
     if (activeConversationId) return;
@@ -664,14 +883,45 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!activeConversationId) return;
-    if (streamConnected) return;
 
+    const intervalMs = streamConnected ? 15000 : 8000;
     const fallbackPoll = setInterval(() => {
       void fetchMessages(activeConversationId, null, false, true);
-    }, 8000);
+    }, intervalMs);
 
     return () => clearInterval(fallbackPoll);
   }, [activeConversationId, fetchMessages, streamConnected]);
+
+  useEffect(() => {
+    if (!authUserId || !storageHydrated) return;
+
+    const refreshSilently = () => {
+      void fetchConversations("", true);
+      const currentActiveConversationId = activeConversationIdRef.current;
+      if (currentActiveConversationId) {
+        void fetchMessages(currentActiveConversationId, null, false, true);
+      }
+    };
+
+    const handleFocus = () => {
+      refreshSilently();
+      attachSse();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      refreshSilently();
+      attachSse();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [attachSse, authUserId, fetchConversations, fetchMessages, storageHydrated]);
 
   useEffect(() => {
     if (!authUserId) return;
@@ -770,6 +1020,12 @@ export default function MessagesPage() {
   };
 
   const handleSelectConversation = (userId: string) => {
+    const hasCachedThread = hydrateThreadFromCache(userId);
+    if (!hasCachedThread) {
+      setMessages([]);
+      setNextCursor(null);
+      setHasMore(false);
+    }
     setActiveConversationId(userId);
     setIsMobileChatView(true);
   };

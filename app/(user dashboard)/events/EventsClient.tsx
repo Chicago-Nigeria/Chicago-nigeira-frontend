@@ -5,6 +5,7 @@ import { Plus, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import EventsList from "./event-components/EventsList";
 import EventStatusTabs from "./event-components/eventStatusTabs";
+import SubscriptionBanner from "@/app/components/SubscriptionBanner";
 import { useSession } from "@/app/store/useSession";
 import { useAuthModal } from "@/app/store/useAuthModal";
 import { useQuery } from "@tanstack/react-query";
@@ -96,6 +97,11 @@ export default function Events() {
 
 			</div>
 
+			{/* Subscription Promo Banner */}
+			<div className="mt-4 -mb-2">
+				<SubscriptionBanner />
+			</div>
+
 			{/* My Events - Mobile View (above search and events) */}
 			<div className="lg:hidden mt-6">
 				<EventStatus user={user} isCollapsible={true} />
@@ -121,8 +127,8 @@ export default function Events() {
 							key={category}
 							onClick={() => setSelectedCategory(category)}
 							className={`px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap flex-shrink-0 ${selectedCategory === category
-									? "bg-[var(--primary-color)] text-white"
-									: "bg-white text-gray-700 border border-gray-200 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)]"
+								? "bg-[var(--primary-color)] text-white"
+								: "bg-white text-gray-700 border border-gray-200 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)]"
 								}`}
 						>
 							{category}
@@ -134,8 +140,8 @@ export default function Events() {
 						ref={buttonRef}
 						onClick={handleDropdownToggle}
 						className={`px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap flex items-center gap-1 flex-shrink-0 ${dropdownCategories.includes(selectedCategory)
-								? "bg-[var(--primary-color)] text-white"
-								: "bg-white text-gray-700 border border-gray-200 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)]"
+							? "bg-[var(--primary-color)] text-white"
+							: "bg-white text-gray-700 border border-gray-200 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)]"
 							}`}
 					>
 						{dropdownCategories.includes(selectedCategory) ? selectedCategory : "More"}
@@ -161,8 +167,8 @@ export default function Events() {
 									setShowDropdown(false);
 								}}
 								className={`w-full text-left px-4 py-2 text-sm transition ${selectedCategory === category
-										? "bg-[var(--primary-color)] text-white"
-										: "text-gray-700 hover:bg-gray-50"
+									? "bg-[var(--primary-color)] text-white"
+									: "text-gray-700 hover:bg-gray-50"
 									}`}
 							>
 								{category}

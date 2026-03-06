@@ -15,13 +15,18 @@ const nextConfig: NextConfig = {
 				hostname: 'res.cloudinary.com',
 				pathname: '/**',
 			},
+			{
+				protocol: 'https',
+				hostname: 'i.pravatar.cc',
+				pathname: '/**',
+			},
 		],
 	},
 	env: {
-    // This ensures env variables are available at build time
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_FRONTEND_URL: process.env.NEXT_PUBLIC_FRONTEND_URL,
-  },
+		// This ensures env variables are available at build time
+		NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+		NEXT_PUBLIC_FRONTEND_URL: process.env.NEXT_PUBLIC_FRONTEND_URL,
+	},
 };
 
 export default nextConfig;

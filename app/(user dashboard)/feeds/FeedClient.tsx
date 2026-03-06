@@ -19,6 +19,7 @@ import PromotedEventCard from "./components/PromotedEventCard";
 import BlogPostCard from "./components/BlogPostCard";
 import CreatePostForm from "./components/CreatePostForm";
 import NewPostsBanner from "./components/NewPostsBanner";
+import SubscriptionBanner from "@/app/components/SubscriptionBanner";
 import { IPromotedContent, IPost } from "@/app/types";
 import { useSession } from "@/app/store/useSession";
 import { useAuthModal } from "@/app/store/useAuthModal";
@@ -187,6 +188,9 @@ export default function Feed() {
             <Filter className="w-4 h-4" /> Filters
           </button>
         </div>
+
+        {/* Subscription Banner */}
+        <SubscriptionBanner />
 
         {/* Create Post Form - Only show for 'all' filter and logged in users */}
         {activeFilter === 'all' && user && <CreatePostForm />}

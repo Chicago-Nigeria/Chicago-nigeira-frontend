@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Calendar, Shield, ScrollText, Package, X, Wallet, FileText, Megaphone, CreditCard } from 'lucide-react';
+import { Home, Users, Calendar, Shield, ScrollText, Package, X, Wallet, FileText, Megaphone, CreditCard, Landmark } from 'lucide-react';
 
 interface AdminNavProps {
   isOpen?: boolean;
@@ -52,6 +52,11 @@ export default function AdminNav({ isOpen = true, onClose }: AdminNavProps) {
       name: 'Promoted Content',
       href: '/sys-admin/promoted-content',
       icon: Megaphone,
+    },
+    {
+      name: 'Investor Registrations',
+      href: '/sys-admin/investor-registrations',
+      icon: Landmark,
     },
     {
       name: 'Activity Logs',
