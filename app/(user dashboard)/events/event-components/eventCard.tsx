@@ -83,7 +83,7 @@ export default function EventCard({ event, isRegistered = false }: EventCardProp
 			: 'Unknown';
 
 	// Calculate spots left
-	const spotsLeft = event.isFree ? null : event.availableTickets;
+	const spotsLeft = event.totalTickets ? event.availableTickets : (event.isFree ? null : event.availableTickets);
 
 	// Get banner image or use placeholder
 	const bannerImage = event.coverImage || '/image-placeholder.webp';
@@ -166,7 +166,7 @@ export default function EventCard({ event, isRegistered = false }: EventCardProp
 
 					{/* Spots Left */}
 					<div className="flex items-center gap-2 text-sm">
-						{event.isFree ? (
+						{event.isFree && !event.totalTickets ? (
 							<div className="flex items-center gap-2 text-gray-600">
 								<Infinity className="w-5 h-5 text-[var(--primary-color)]" />
 								<span className="font-medium">Unlimited spots</span>

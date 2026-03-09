@@ -1,0 +1,43 @@
+# Chicago Nigerians
+
+> Connecting Nigerians in Chicago — Socially & Professionally. The fastest-growing Nigerian community platform in Chicago for networking, events, marketplace, and cultural updates.
+
+## About
+
+Chicago Nigerians is a community-driven platform that brings together Nigerians living in the Chicago metropolitan area. The platform enables members to network professionally and socially, discover and attend community events, support Nigerian-owned local businesses through a marketplace, and stay updated with news from Nigeria and the diaspora.
+
+- 500+ active members
+- 50+ monthly events
+- 50+ local businesses listed
+- Free to join with optional premium membership ($20/month)
+
+## Core Features
+
+- **Networking Feed**: A social networking feed for connecting with fellow Nigerians professionally and socially
+- **Events & Ticketing**: Discover, host, and attend Nigerian cultural events, business meetups, and community gatherings
+- **Marketplace**: Buy and sell products and services within the Nigerian community; a directory of local Nigerian-owned businesses
+- **News & Culture Updates**: Stay updated with the latest news from Nigeria and cultural happenings in Chicago
+
+## Links
+
+- [Home](https://chicagonigerians.com/): Landing page with community overview
+- [Community Feed](https://chicagonigerians.com/feeds): Social networking and news feed
+- [Events](https://chicagonigerians.com/events): Browse and register for community events
+- [Marketplace](https://chicagonigerians.com/marketplace): Nigerian business directory and marketplace
+- [About Us](https://chicagonigerians.com/about): Learn more about the community
+- [Contact Us](https://chicagonigerians.com/contacts): Get in touch with the team
+- [Privacy Policy](https://chicagonigerians.com/privacy-policy): Privacy policy
+- [Terms of Service](https://chicagonigerians.com/terms-of-service): Terms of service
+
+## Contact
+
+- Email: support@chicagonigerians.com
+- Phone: +1 (224) 245-6588
+- Location: Chicago, IL
+
+## Social Media
+
+- [Facebook](https://www.facebook.com/people/Chicago9ja/61579806144918/)
+- [Instagram](https://www.instagram.com/chicago9ja/)
+- [LinkedIn](https://www.linkedin.com/company/chicago-nigerians/)
+- [X (Twitter)](https://x.com/chicagoNGNS)

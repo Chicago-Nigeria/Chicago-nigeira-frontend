@@ -1,0 +1,159 @@
+# Chicago Nigerians — Full Documentation
+
+> Connecting Nigerians in Chicago — Socially & Professionally. The fastest-growing Nigerian community platform in Chicago for networking, events, marketplace, and cultural updates.
+
+## About Chicago Nigerians
+
+Chicago Nigerians is a community-driven digital platform designed to connect, empower, and celebrate Nigerians living in the Chicago metropolitan area. The platform serves as a central hub for the Nigerian diaspora community, bridging the gap between tradition and opportunity by enabling members to build meaningful social and professional connections.
+
+Founded with the mission of fostering cultural preservation while encouraging professional growth, Chicago Nigerians has grown to serve over 500 active members who participate in weekly events, support local Nigerian-owned businesses, and engage through a vibrant social networking feed.
+
+### Key Statistics
+
+- 500+ active community members
+- 50+ monthly events covering cultural celebrations, business meetups, and networking sessions
+- 50+ local Nigerian-owned businesses listed in the marketplace directory
+- 4.5/5.0 community rating
+- Growing rapidly across the Chicago area
+
+---
+
+## Core Platform Features
+
+### 1. Networking Feed (`/feeds`)
+
+The Networking Feed is the heart of the Chicago Nigerians community. It functions as a social media-style feed where members can:
+
+- Share posts, updates, photos, and videos with the community
+- Engage with other members through likes, comments, and shares
+- Discover trending topics and community discussions
+- Stay informed about news from Nigeria and cultural happenings in Chicago
+- Build professional and personal connections
+
+The feed supports rich media content including images, videos, and text posts, making it a comprehensive social networking experience tailored for the Nigerian diaspora in Chicago.
+
+### 2. Events & Ticketing (`/events`)
+
+The Events section allows community members to:
+
+- Browse upcoming Nigerian cultural events, business meetups, and community gatherings in Chicago
+- Register for free and paid events with an integrated ticketing system
+- View event details including date, time, venue, and organizer information
+- Discover events by category (Networking, Cultural, Business, Social, etc.)
+- Host and promote their own community events
+
+Notable events include property showcases, cultural celebrations like Naija Independence Day, investor receptions, and regular community networking meetups.
+
+### 3. Marketplace (`/marketplace`)
+
+The Marketplace is a business directory and e-commerce platform that enables:
+
+- Discovery of Nigerian-owned businesses and services in the Chicago area
+- Categories spanning restaurants, real estate, daycare, professional services, and more
+- Business listing and promotion for Nigerian entrepreneurs
+- Direct connection between community members and local service providers
+- Featured and premium business listings for enhanced visibility
+
+The marketplace serves as a "Chicago Nigerian Business Directory" — a go-to guide for finding trusted professionals and businesses within the community.
+
+### 4. News & Culture Updates
+
+Integrated within the feeds section, News & Culture Updates provide:
+
+- Latest news from Nigeria relevant to the diaspora
+- Cultural event coverage and community highlights
+- Updates on community initiatives and developments
+- Insights into Nigerian culture, traditions, and celebrations in Chicago
+
+---
+
+## Membership
+
+### Free Membership
+
+- Access to the community networking feed
+- Browse and register for events
+- Search the marketplace and business directory
+- Connect with other community members
+
+### Premium Membership ($20/month)
+
+- Priority event access and early bird discounts on ticketed events
+- Featured business listings in the marketplace
+- Access to exclusive networking events
+- Advanced search and filtering options
+- Premium badge and enhanced profile visibility
+
+---
+
+## Social Media Management Service
+
+Chicago Nigerians also offers a social media management service for businesses:
+
+- **Price**: $65/month
+- **Platforms covered**: Instagram, TikTok, Facebook, and LinkedIn
+- **Services include**:
+  - Building online brand presence
+  - Generating quality leads
+  - Converting clicks into customers
+  - Professional content management across all platforms
+
+---
+
+## Chicago Nigerians Podcast
+
+The Chicago Nigerians Podcast features stories, culture, and community conversations. Available on:
+
+- Apple Podcasts
+- Spotify
+- YouTube
+
+The podcast covers authentic Nigerian stories from the heart of Chicago, highlighting community members, cultural insights, and diaspora experiences.
+
+---
+
+## Community Gallery
+
+Chicago Nigerians maintains a photo gallery documenting community events and celebrations, including highlights from major events like the Naija @65 Independence Day celebration.
+
+---
+
+## Contact Information
+
+- **Email**: support@chicagonigerians.com
+- **Phone**: +1 (224) 245-6588
+- **Location**: Chicago, IL, United States
+
+## Social Media Profiles
+
+- **Facebook**: [Chicago9ja](https://www.facebook.com/people/Chicago9ja/61579806144918/)
+- **Instagram**: [@chicago9ja](https://www.instagram.com/chicago9ja/)
+- **LinkedIn**: [Chicago Nigerians](https://www.linkedin.com/company/chicago-nigerians/)
+- **X (Twitter)**: [@chicagoNGNS](https://x.com/chicagoNGNS)
+
+---
+
+## Site Navigation
+
+| Page | URL Path | Description |
+|------|----------|-------------|
+| Home | `/` | Landing page with community overview, features, and call-to-action |
+| Community Feed | `/feeds` | Social networking feed with posts, news, and discussions |
+| Events | `/events` | Browse, discover, and register for community events |
+| Marketplace | `/marketplace` | Nigerian business directory and marketplace |
+| About Us | `/about` | About the Chicago Nigerians community |
+| Contact Us | `/contacts` | Contact form and information |
+| Privacy Policy | `/privacy-policy` | Platform privacy policy |
+| Terms of Service | `/terms-of-service` | Platform terms of service |
+| Cookie Policy | `/cookie-policy` | Cookie usage policy |
+| Social Media Subscription | `/social-media-subscription` | Social media management service signup |
+
+---
+
+## Legal
+
+© 2026 Chicago Nigerians. All Rights Reserved.
+
+- [Privacy Policy](https://chicagonigerians.com/privacy-policy)
+- [Terms of Service](https://chicagonigerians.com/terms-of-service)
+- [Cookie Policy](https://chicagonigerians.com/cookie-policy)

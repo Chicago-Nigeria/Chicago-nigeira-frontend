@@ -315,7 +315,7 @@ export default function AlaroCityEventPage() {
 						{/* Spots and Price */}
 						<div className="pt-4 flex flex-wrap items-center justify-between gap-4">
 							<div className="flex items-center gap-2 text-sm">
-								{event.isFree ? (
+								{event.isFree && !event.totalTickets ? (
 									<div className="flex items-center gap-2 text-gray-600">
 										<Infinity className="w-5 h-5 text-[var(--primary-color)]" />
 										<span className="font-medium">Unlimited spots</span>
