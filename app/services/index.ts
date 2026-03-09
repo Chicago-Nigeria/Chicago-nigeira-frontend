@@ -107,6 +107,9 @@ export namespace Event {
   export const getEventById = (id: string) => {
     return callApi<ApiResponse<any>>(`/events/${id}`);
   };
+  export const getEventBySlug = (slug: string) => {
+    return callApi<ApiResponse<any>>(`/events/slug/${slug}`);
+  };
 }
 
 export namespace Post {

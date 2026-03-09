@@ -8,3 +8,11 @@ export const useGetEventById = (id: string) => {
     enabled: !!id,
   });
 };
+
+export const useGetEventBySlug = (slug: string) => {
+  return useQuery({
+    queryKey: ["event", "slug", slug],
+    queryFn: async () => await Event.getEventBySlug(slug),
+    enabled: !!slug,
+  });
+};

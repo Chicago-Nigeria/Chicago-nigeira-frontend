@@ -75,10 +75,12 @@ export default function EventCard({ event, isRegistered = false }: EventCardProp
 		return event.location || event.venue || 'Location TBA';
 	};
 
-	// Format organizer name
-	const organizerName = event.organizer
-		? `${event.organizer.firstName} ${event.organizer.lastName}`
-		: 'Unknown';
+	// Format organizer name (prefer customHostedBy if present)
+	const organizerName = event.customHostedBy
+		? event.customHostedBy
+		: event.organizer
+			? `${event.organizer.firstName} ${event.organizer.lastName}`
+			: 'Unknown';
 
 	// Calculate spots left
 	const spotsLeft = event.isFree ? null : event.availableTickets;
@@ -109,7 +111,7 @@ export default function EventCard({ event, isRegistered = false }: EventCardProp
 			<div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
 				{/* Banner Image Section */}
 				<div className="relative h-52 w-full">
-					<Link href={`/events/${event.id}`}>
+					<Link href={`/events/${event.slug || event.id}`}>
 						<Image
 							src={bannerImage}
 							alt={event.title}
@@ -130,7 +132,7 @@ export default function EventCard({ event, isRegistered = false }: EventCardProp
 
 				{/* Content Section */}
 				<div className="p-5 space-y-3">
-					<Link href={`/events/${event.id}`}>
+					<Link href={`/events/${event.slug || event.id}`}>
 						<h2 className="text-lg font-semibold text-gray-900 line-clamp-2 hover:text-[var(--primary-color)] transition-colors cursor-pointer">{event.title}</h2>
 					</Link>
 					<p className="text-sm text-gray-600 leading-relaxed line-clamp-2">{event.description}</p>

@@ -12,8 +12,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import ShareButton from "../../components/shareButton";
-import { useParams } from "next/navigation";
-import { useGetEventById } from "@/app/hooks/useEvent";
+import { useGetEventBySlug } from "@/app/hooks/useEvent";
 import { useEffect, useMemo, useState } from "react";
 import TicketRegistrationModal from "../event-components/TicketRegistrationModal";
 import MediaViewer from "@/app/components/modals/MediaViewer";
@@ -22,13 +21,15 @@ import { useSession } from "@/app/store/useSession";
 import { useQuery } from "@tanstack/react-query";
 import { callApi } from "@/app/libs/helper/callApi";
 import { ApiResponse } from "@/app/types";
+import type { Metadata } from "next";
 
 type AttendingEventLite = {
 	id: string;
 };
 
-export default function EventDetail() {
-	const { id } = useParams();
+const SLUG = "alaro-city-property-show";
+
+export default function AlaroCityEventPage() {
 	const { requireAuth } = useAuthGuard();
 	const { user } = useSession((state) => state);
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,7 +37,7 @@ export default function EventDetail() {
 	const [showMediaViewer, setShowMediaViewer] = useState(false);
 	const [mediaViewerIndex, setMediaViewerIndex] = useState(0);
 
-	const { data, isLoading, error } = useGetEventById(id as string);
+	const { data, isLoading, error } = useGetEventBySlug(SLUG);
 	const event = data?.data?.data;
 
 	const { data: attendingEvents = [] } = useQuery({
@@ -60,7 +61,6 @@ export default function EventDetail() {
 		setHasRegistered(attendingEvents.some((item) => item?.id === event.id));
 	}, [attendingEvents, event?.id]);
 
-	// Check if event is in the past
 	const isEventPast = () => {
 		if (!event) return false;
 		const eventDate = new Date(event.endDate || event.startDate);
@@ -81,7 +81,6 @@ export default function EventDetail() {
 		}, "register for this event");
 	};
 
-	// Format short date
 	const formatShortDate = (dateStr: string) => {
 		const date = new Date(dateStr);
 		return date.toLocaleDateString("en-US", {
@@ -92,7 +91,6 @@ export default function EventDetail() {
 		});
 	};
 
-	// Format time
 	const formatTime = (timeStr: string) => {
 		const [hours, minutes] = timeStr.split(":");
 		const hour = parseInt(hours);
@@ -101,17 +99,14 @@ export default function EventDetail() {
 		return `${displayHour}:${minutes} ${ampm}`;
 	};
 
-	// Check if dates are the same
 	const isSameDate = (date1: string, date2: string) => {
 		return new Date(date1).toDateString() === new Date(date2).toDateString();
 	};
 
-	// Check if times are the same
 	const isSameTime = (time1: string, time2: string) => {
 		return time1 === time2;
 	};
 
-	// Format location
 	const formatLocation = () => {
 		if (event?.venue && event?.location) {
 			return `${event.venue}, ${event.location}`;
@@ -119,26 +114,21 @@ export default function EventDetail() {
 		return event?.location || event?.venue || "Location TBA";
 	};
 
-	// Format organizer name (prefer customHostedBy if present)
 	const organizerName = event?.customHostedBy
 		? event.customHostedBy
 		: event?.organizer
 			? `${event.organizer.firstName} ${event.organizer.lastName}`
 			: "Unknown";
 
-	// Get initials for avatar
 	const hostInitials = event?.customHostedBy
 		? event.customHostedBy.split(' ').slice(0, 2).map((n: string) => n.charAt(0).toUpperCase()).join('')
 		: `${event?.organizer?.firstName?.charAt(0)?.toUpperCase() || ''}${event?.organizer?.lastName?.charAt(0)?.toUpperCase() || ''}`;
 
-	// Get share URL
 	const shareUrl =
 		typeof window !== "undefined"
-			? `${window.location.origin}/events/${id}`
+			? `${window.location.origin}/events/${SLUG}`
 			: "";
 
-	// Build combined media array for the viewer (cover image + additional images)
-	// Must be before early returns to satisfy Rules of Hooks
 	const allMediaItems = useMemo(() => {
 		if (!event) return [];
 		const items: { type: "image"; url: string }[] = [];
@@ -156,7 +146,6 @@ export default function EventDetail() {
 		setShowMediaViewer(true);
 	};
 
-	// Auto-link phone numbers in description text
 	const renderDescriptionWithPhoneLinks = (text: string) => {
 		if (!text) return text;
 		const phoneRegex = /(\+?\d[\d\s\-().]{7,}\d)/g;
@@ -219,7 +208,6 @@ export default function EventDetail() {
 
 				{/* Event Image Section */}
 				<section className="bg-white rounded-xl overflow-hidden space-y-4">
-					{/* Main Image - Full width, natural aspect ratio */}
 					<div
 						className="w-full bg-gray-100 relative cursor-pointer"
 						onClick={() => openMediaViewer(0)}
@@ -233,17 +221,14 @@ export default function EventDetail() {
 							priority
 							style={{ width: '100%', height: 'auto' }}
 						/>
-						{/* Category Badge */}
 						<span className="absolute top-3 left-3 bg-[var(--primary-color)] text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md">
 							{event.category || "General"}
 						</span>
-						{/* Share Button */}
 						<div className="absolute right-5 top-4 flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
 							<ShareButton title={event.title} url={shareUrl} />
 						</div>
 					</div>
 
-					{/* Additional Images - Clickable to open viewer */}
 					{event.images && event.images.length > 0 && (
 						<div className="flex gap-3 overflow-x-auto px-4 py-1 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
 							{event.images.map((src: string, index: number) => (
@@ -266,13 +251,10 @@ export default function EventDetail() {
 
 				{/* Event Details Section */}
 				<section className="bg-white p-4 md:p-6 rounded-xl">
-					{/* Event Header */}
 					<div className="pb-4 border-b border-b-gray-200 space-y-4">
 						<h1 className="font-bold text-2xl">{event.title}</h1>
 
-						{/* Event Meta Info */}
 						<div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-gray-700">
-							{/* Date */}
 							<div className="flex items-center gap-2">
 								<Calendar className="w-5 h-5 text-[var(--primary-color)] flex-shrink-0" />
 								<span>
@@ -281,7 +263,6 @@ export default function EventDetail() {
 								</span>
 							</div>
 
-							{/* Time */}
 							<div className="flex items-center gap-2">
 								<Clock className="w-5 h-5 text-[var(--primary-color)] flex-shrink-0" />
 								<span>
@@ -290,7 +271,6 @@ export default function EventDetail() {
 								</span>
 							</div>
 
-							{/* Location */}
 							<div className="flex items-center gap-2">
 								<MapPin className="w-5 h-5 text-[var(--primary-color)] flex-shrink-0" />
 								<span>{formatLocation()}</span>
@@ -324,7 +304,6 @@ export default function EventDetail() {
 
 					{/* Spots and Price */}
 					<div className="pt-4 flex flex-wrap items-center justify-between gap-4">
-						{/* Spots Left */}
 						<div className="flex items-center gap-2 text-sm">
 							{event.isFree ? (
 								<div className="flex items-center gap-2 text-gray-600">
@@ -344,7 +323,6 @@ export default function EventDetail() {
 							)}
 						</div>
 
-						{/* Price */}
 						<div>
 							{event.isFree ? (
 								<span className="text-[var(--primary-color)] text-2xl font-bold">
@@ -385,7 +363,6 @@ export default function EventDetail() {
 				<div className="bg-white p-6 rounded-xl shadow-sm">
 					<h3 className="font-semibold text-lg mb-4">Get your ticket</h3>
 
-					{/* Event Quick Info */}
 					<div className="space-y-3 text-sm text-gray-600 mb-6">
 						<div className="flex items-center gap-2">
 							<Calendar className="w-4 h-4 text-[var(--primary-color)]" />
@@ -401,7 +378,6 @@ export default function EventDetail() {
 						</div>
 					</div>
 
-					{/* Price Display */}
 					<div className="py-4 border-t border-b border-gray-200 mb-4">
 						<div className="flex items-center justify-between">
 							<span className="text-gray-600">Price</span>
@@ -417,7 +393,6 @@ export default function EventDetail() {
 						</div>
 					</div>
 
-					{/* CTA Button */}
 					{isPastEvent ? (
 						<span className="block w-full py-3 bg-gray-200 text-gray-500 text-center font-semibold rounded-lg cursor-not-allowed">
 							Registration Closed
@@ -435,7 +410,6 @@ export default function EventDetail() {
 						</button>
 					)}
 
-					{/* Spots Left */}
 					{!event.isFree && !isPastEvent && (
 						<p className="text-center text-sm text-gray-500 mt-3">
 							Only {event.availableTickets} spots left
@@ -478,5 +452,5 @@ export default function EventDetail() {
 			initialIndex={mediaViewerIndex}
 		/>
 	</>
-);
+	);
 }
