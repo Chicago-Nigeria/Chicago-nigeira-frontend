@@ -202,7 +202,7 @@ export default function AlaroCityEventPage() {
 
 	return (
 		<>
-			<main className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4 md:gap-12">
+			<main className="grid grid-cols-1 lg:grid-cols-[minmax(0,2.5fr)_250px] gap-4 md:gap-6">
 				<section className="space-y-4 pt-4">
 					{/* Header Section */}
 					<Link href="/events" className="flex items-center gap-4">
@@ -216,17 +216,17 @@ export default function AlaroCityEventPage() {
 					{/* Event Image Section */}
 					<section className="bg-white rounded-xl overflow-hidden space-y-4">
 						<div
-							className="w-full bg-gray-100 relative cursor-pointer"
+							className="w-full bg-gray-100 relative cursor-pointer max-h-[400px] overflow-hidden"
 							onClick={() => openMediaViewer(0)}
 						>
 							<Image
-								className="w-full h-auto"
+								className="w-full h-full object-cover"
 								src={bannerImage}
 								alt={event.title}
 								width={1200}
-								height={675}
+								height={400}
 								priority
-								style={{ width: '100%', height: 'auto' }}
+								style={{ width: '100%', height: '100%', maxHeight: '400px', objectFit: 'cover' }}
 							/>
 							<span className="absolute top-3 left-3 bg-[var(--primary-color)] text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md">
 								{event.category || "General"}
