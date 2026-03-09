@@ -21,7 +21,7 @@ import { useSession } from "@/app/store/useSession";
 import { useQuery } from "@tanstack/react-query";
 import { callApi } from "@/app/libs/helper/callApi";
 import { ApiResponse } from "@/app/types";
-import type { Metadata } from "next";
+
 
 type AttendingEventLite = {
 	id: string;
