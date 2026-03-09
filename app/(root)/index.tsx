@@ -218,52 +218,64 @@ export default function Index() {
             viewport={{ once: true }}
             variants={staggerContainer}
           >
-            <motion.div
-              className="flex flex-col gap-2 min-h-50 md:min-h-50 min-w-full md:min-w-70 bg-white justify-center items-center p-4 rounded-md"
-              variants={fadeInUp}
-            >
-              <p>
-                <LandingUsersIcon />
-              </p>
-              <p
-                className={`text-4xl md:text-6xl font-extrabold text-[var(--primary-color)]`}
+            <Link href="/feeds?action=signin">
+              <motion.div
+                className="flex flex-col gap-2 min-h-50 md:min-h-50 min-w-full md:min-w-70 bg-white justify-center items-center p-4 rounded-md cursor-pointer transition-shadow duration-300 hover:shadow-lg hover:shadow-green-100"
+                variants={fadeInUp}
+                whileHover={{ scale: 1.05, y: -4 }}
+                transition={{ type: "spring", stiffness: 300 }}
               >
-                500+
-              </p>
-              <p className="text-sm md:text-base">Active Members</p>
-            </motion.div>
-            <motion.div
-              className="flex flex-col gap-2 min-h-50 md:min-h-50 min-w-full md:min-w-70 bg-white justify-center items-center p-4 rounded-md"
-              variants={fadeInUp}
-            >
-              <p>
-                <LandingCalenderIcon />
-              </p>
-              <p
-                className={
-                  "text-4xl md:text-6xl font-extrabold text-[var(--orange-color)]"
-                }
+                <p>
+                  <LandingUsersIcon />
+                </p>
+                <p
+                  className={`text-4xl md:text-6xl font-extrabold text-[var(--primary-color)]`}
+                >
+                  500+
+                </p>
+                <p className="text-sm md:text-base">Active Members</p>
+              </motion.div>
+            </Link>
+            <Link href="/events">
+              <motion.div
+                className="flex flex-col gap-2 min-h-50 md:min-h-50 min-w-full md:min-w-70 bg-white justify-center items-center p-4 rounded-md cursor-pointer transition-shadow duration-300 hover:shadow-lg hover:shadow-orange-100"
+                variants={fadeInUp}
+                whileHover={{ scale: 1.05, y: -4 }}
+                transition={{ type: "spring", stiffness: 300 }}
               >
-                50+
-              </p>
-              <p className="text-sm md:text-base">Monthly Events</p>
-            </motion.div>
-            <motion.div
-              className="flex flex-col gap-2 min-h-50 md:min-h-50 min-w-full md:min-w-70 bg-white justify-center items-center p-4 rounded-md"
-              variants={fadeInUp}
-            >
-              <p>
-                <LandingMarketplaceIcon />
-              </p>
-              <p
-                className={
-                  "text-4xl md:text-6xl font-extrabold text-[var(--blue-color)]"
-                }
+                <p>
+                  <LandingCalenderIcon />
+                </p>
+                <p
+                  className={
+                    "text-4xl md:text-6xl font-extrabold text-[var(--orange-color)]"
+                  }
+                >
+                  50+
+                </p>
+                <p className="text-sm md:text-base">Monthly Events</p>
+              </motion.div>
+            </Link>
+            <Link href="/marketplace">
+              <motion.div
+                className="flex flex-col gap-2 min-h-50 md:min-h-50 min-w-full md:min-w-70 bg-white justify-center items-center p-4 rounded-md cursor-pointer transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-100"
+                variants={fadeInUp}
+                whileHover={{ scale: 1.05, y: -4 }}
+                transition={{ type: "spring", stiffness: 300 }}
               >
-                50+
-              </p>
-              <p className="text-sm md:text-base">Local Businesses</p>
-            </motion.div>
+                <p>
+                  <LandingMarketplaceIcon />
+                </p>
+                <p
+                  className={
+                    "text-4xl md:text-6xl font-extrabold text-[var(--blue-color)]"
+                  }
+                >
+                  50+
+                </p>
+                <p className="text-sm md:text-base">Local Businesses</p>
+              </motion.div>
+            </Link>
           </motion.section>
         </header>
         {/* What we offer  */}
@@ -295,52 +307,57 @@ export default function Index() {
                 title: "Networking Feed",
                 description:
                   "Connect with fellow Nigerians professionally and socially through our networking platform.",
+                href: "/feeds",
               },
               {
                 icon: "/icons/calender.webp",
                 title: "Events & Ticketing",
                 description:
                   "Discover, host, and attend Nigerian cultural events, business meetups, and community gatherings.",
+                href: "/events",
               },
               {
                 icon: "/icons/marketplace.webp",
                 title: "Marketplace",
                 description:
                   "Buy and sell products and services within the Nigerian community. Support local Nigerian businesses.",
+                href: "/marketplace",
               },
               {
                 icon: "/icons/globe.webp",
                 title: "News & Culture Update",
                 description:
                   "Stay updated with the latest news from Nigeria and cultural happenings in the Chicago Nigerian community.",
+                href: "/feeds",
               },
             ].map((item, index) => {
               return (
-                <motion.div
-                  key={index}
-                  className="flex flex-col min-h-72 w-full md:w-70 p-4 justify-center items-center shadow-[0_4px_46px_-14px_#00000040] rounded-md"
-                  variants={fadeInUp}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                  }}
-                >
-                  <p className="mb-4">
-                    <Image
-                      src={`${item.icon}`}
-                      alt="icon"
-                      height={32}
-                      width={32}
-                    />
-                  </p>
-                  <h3 className="text-xl md:text-2xl mb-4 md:mb-8 text-center">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-400 text-center text-sm md:text-base">
-                    {item.description}
-                  </p>
-                </motion.div>
+                <Link key={index} href={item.href}>
+                  <motion.div
+                    className="flex flex-col min-h-72 w-full md:w-70 p-4 justify-center items-center shadow-[0_4px_46px_-14px_#00000040] rounded-md cursor-pointer transition-shadow duration-300 hover:shadow-[0_8px_60px_-10px_#00000060]"
+                    variants={fadeInUp}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                    }}
+                  >
+                    <p className="mb-4">
+                      <Image
+                        src={`${item.icon}`}
+                        alt="icon"
+                        height={32}
+                        width={32}
+                      />
+                    </p>
+                    <h3 className="text-xl md:text-2xl mb-4 md:mb-8 text-center">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-400 text-center text-sm md:text-base">
+                      {item.description}
+                    </p>
+                  </motion.div>
+                </Link>
               );
             })}
           </motion.div>
@@ -621,7 +638,7 @@ export default function Index() {
               <p className=" lg:max-w-140 text-sm md:text-lg  mt-2">
                 For just{" "}
                 <span className="text-[var(--primary-color)] ">$65/month</span>
-                 , we&apos;ll manage your presence across Instagram, TikTok,
+                , we&apos;ll manage your presence across Instagram, TikTok,
                 Facebook, and LinkedIn.
               </p>
 
@@ -751,7 +768,7 @@ export default function Index() {
             </h2>
             <p className="text-sm md:text-base">
               Don&apos;t wait! Start connecting, networking, and growing with
-              the most vibrant Nigerian community in Chicago. 
+              the most vibrant Nigerian community in Chicago.
             </p>
             <motion.div
               className="flex gap-2 justify-center md:gap-8 mt-8"
@@ -911,7 +928,7 @@ export default function Index() {
               <li className="">
                 <p className="font-semibold">Phone:</p>
                 <Link className="text-gray-400" href={"tel:+1(224)245-6588"}>
-                +1 (224) 245-6588
+                  +1 (224) 245-6588
                 </Link>
               </li>
               <li className="">
