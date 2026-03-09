@@ -25,7 +25,7 @@ Chicago Nigerians is a community-driven platform that brings together Nigerians 
 - [Events](https://chicagonigerians.com/events): Browse and register for community events
 - [Marketplace](https://chicagonigerians.com/marketplace): Nigerian business directory and marketplace
 - [About Us](https://chicagonigerians.com/about): Learn more about the community
-- [Contact Us](https://chicagonigerians.com/contacts): Get in touch with the team
+- [Contact Us](https://chicagonigerians.com/contact): Get in touch with the team
 - [Privacy Policy](https://chicagonigerians.com/privacy-policy): Privacy policy
 - [Terms of Service](https://chicagonigerians.com/terms-of-service): Terms of service
 
