@@ -43,6 +43,8 @@ export default function Footer() {
                             href={
                                 "https://www.facebook.com/people/Chicago9ja/61579806144918/?mibextid=rS40aB7S9Ucbxw6v"
                             }
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
                             <FacebookIcon />
                         </Link>
@@ -50,14 +52,22 @@ export default function Footer() {
                             href={
                                 "https://www.instagram.com/chicago9ja/?igsh=MWsxempzZ3d0YWR3bA%3D%3D"
                             }
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
                             <InstagramIcon />
                         </Link>
-                        <Link href={"https://www.linkedin.com/company/chicago-nigerians/"}>
+                        <Link
+                            href={"https://www.linkedin.com/company/chicago-nigerians/"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             <LinkedInIcon />
                         </Link>
                         <Link
                             href={"https://x.com/chicagoNGNS?t=7BkmctvF3G2FJc1_sDyOGA&s=09"}
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
                             <XIcon />
                         </Link>

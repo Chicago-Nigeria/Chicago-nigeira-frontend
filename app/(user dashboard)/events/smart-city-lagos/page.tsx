@@ -1,154 +1,466 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import QualificationFunnel from "./QualificationFunnel";
+"use client";
 
-export const metadata: Metadata = {
-  title: "SMART City Lagos Property Show — Private Investor Briefing | Chicago Nigerians",
-  description:
-    "Exclusive investor networking cocktail in Chicago. Private access to high-growth residential, commercial & mixed-use developments in Lagos' Lekki Free Zone.",
-  openGraph: {
-    title: "SMART City Lagos — Private Investor Briefing | March 15, 2026",
-    description:
-      "By invitation only. Join select investors and business leaders on March 15th at 6 PM for a private briefing on Alaro City — a 2,000-hectare master-planned city in Lagos's Lekki Free Zone.",
-    images: ["/smart-city-lagos-banner.jpg"],
-  },
+import {
+	ArrowLeft,
+	Calendar,
+	Clock,
+	MapPin,
+	Infinity,
+	Ticket,
+	Loader2,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import ShareButton from "../../components/shareButton";
+import { useGetEventBySlug } from "@/app/hooks/useEvent";
+import { useEffect, useMemo, useState } from "react";
+import TicketRegistrationModal from "../event-components/TicketRegistrationModal";
+import MediaViewer from "@/app/components/modals/MediaViewer";
+import { useAuthGuard } from "@/app/hooks/useAuthGuard";
+import { useSession } from "@/app/store/useSession";
+import { useQuery } from "@tanstack/react-query";
+import { callApi } from "@/app/libs/helper/callApi";
+import { ApiResponse } from "@/app/types";
+import type { Metadata } from "next";
+
+type AttendingEventLite = {
+	id: string;
 };
 
-export default function SmartCityLagosPage() {
-  return (
-    <div className="font-sans selection:bg-[var(--primary-color)]/30">
-      {/* Background ambient light */}
-      <div className="absolute top-0 inset-x-0 h-[800px] bg-[radial-gradient(ellipse_at_top_center,_var(--primary-color-light)_0%,_transparent_60%)] opacity-50 pointer-events-none z-0"></div>
+const SLUG = "smart-city-lagos";
 
-      {/* Hero Section */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-12 items-center">
+export default function AlaroCityEventPage() {
+	const { requireAuth } = useAuthGuard();
+	const { user } = useSession((state) => state);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [hasRegistered, setHasRegistered] = useState(false);
+	const [showMediaViewer, setShowMediaViewer] = useState(false);
+	const [mediaViewerIndex, setMediaViewerIndex] = useState(0);
 
-          {/* Left: Content */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-            <p className="text-[var(--primary-color)] text-xs sm:text-sm md:text-base font-semibold tracking-[4px] uppercase mb-4 md:mb-6 flex items-center lg:justify-start justify-center gap-3">
-              <span className="w-12 h-px bg-[var(--primary-color)]/50 hidden lg:block"></span>
-              Private Investor Briefing
-              <span className="w-8 md:w-12 h-px bg-[var(--primary-color)]/50 lg:hidden"></span>
-            </p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight tracking-tight">
-              SMART City Lagos
-              <br className="hidden md:block" />
-              <span className="block text-[var(--primary-color)] mt-2">
-                Exclusive Opportunity
-              </span>
-            </h1>
-            <p className="text-gray-600 text-base md:text-xl leading-relaxed mb-8 md:mb-10 max-w-2xl font-light">
-              By invitation only. Join select investors and business leaders on
-              <span className="text-gray-900 font-medium"> March 15th at 6 PM</span> for a private briefing on Alaro City — a 2,000-hectare master-planned city in Lagos&apos;s Lekki Free Zone.
-            </p>
-            <a href="#apply" className="inline-flex items-center justify-center px-6 md:px-8 py-3.5 md:py-4 bg-[var(--primary-color)] text-white text-base md:text-lg font-semibold rounded-full hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-[var(--primary-color)]/90">
-              Request Your Invitation
-              <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </a>
-          </div>
+	const { data, isLoading, error } = useGetEventBySlug(SLUG);
+	const event = data?.data?.data;
 
-          {/* Right: IG Flyer */}
-          <div className="flex justify-center lg:justify-end relative mt-2 md:mt-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-color-light)] to-transparent blur-[80px] opacity-60 rounded-full w-full h-full pointer-events-none"></div>
-            <div className="relative group">
-              <div className="absolute -inset-1.5 bg-[var(--primary-color)] rounded-[2rem] blur-md opacity-20 group-hover:opacity-30 transition duration-500"></div>
-              <Image
-                src="/smart-city-lagos-banner.jpg"
-                alt="SMART City Lagos — Private Real Estate Investment Briefing"
-                width={540}
-                height={960}
-                className="relative w-full max-w-[340px] md:max-w-[420px] rounded-3xl shadow-2xl border border-gray-200 group-hover:scale-[1.02] transition-transform duration-500 object-cover"
-                priority
-                quality={90}
-              />
-            </div>
-          </div>
+	const { data: attendingEvents = [] } = useQuery({
+		queryKey: ["attending-events"],
+		queryFn: async () => {
+			const response = await callApi<ApiResponse<AttendingEventLite[]>>(
+				"/events/user/attending",
+				"GET"
+			);
+			if (response.error) {
+				throw new Error(response.error.message);
+			}
+			return response.data?.data || [];
+		},
+		enabled: !!user,
+		staleTime: 60 * 1000,
+	});
 
-        </div>
-      </div>
+	useEffect(() => {
+		if (!event?.id) return;
+		setHasRegistered(attendingEvents.some((item) => item?.id === event.id));
+	}, [attendingEvents, event?.id]);
 
-      {/* Value Props Section */}
-      <div className="relative py-24 border-y border-gray-200 bg-white/40 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="text-center mb-16 md:mb-24">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-              Why Alaro City, Lekki Free Zone?
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg md:text-xl font-light leading-relaxed">
-              Located in one of Africa&apos;s most significant investment corridors, Alaro City represents a
-              once-in-a-generation opportunity for forward-thinking investors.
-            </p>
-          </div>
+	const isEventPast = () => {
+		if (!event) return false;
+		const eventDate = new Date(event.endDate || event.startDate);
+		const eventEndTime = event.endTime || event.startTime;
+		if (eventEndTime) {
+			const [hours, minutes] = eventEndTime.split(':');
+			eventDate.setHours(parseInt(hours), parseInt(minutes));
+		}
+		return eventDate < new Date();
+	};
 
-          {/* Key highlights */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 gap-y-12 mb-24">
-            {[
-              { stat: "2,000", label: "Hectares of Master-Planned Development" },
-              { stat: "Deep Sea", label: "Adjacent to Lekki Deep Sea Port" },
-              { stat: "Multi-Use", label: "Residential, Commercial & Industrial" }
-            ].map((item, idx) => (
-              <div key={idx} className="group relative bg-white border border-gray-200 hover:border-[var(--primary-color)]/30 rounded-3xl p-8 sm:p-10 text-center transition-all duration-500 overflow-hidden shadow-sm hover:shadow-lg">
-                <div className="absolute top-0 left-0 w-full h-1 bg-[var(--primary-color)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="text-4xl md:text-5xl font-bold text-[var(--primary-color)] mb-4 transition-all duration-500">{item.stat}</div>
-                <div className="text-sm md:text-base text-gray-500 uppercase tracking-[2px] font-medium transition-colors group-hover:text-gray-700">{item.label}</div>
-              </div>
-            ))}
-          </div>
+	const isPastEvent = event ? isEventPast() : false;
 
-          {/* Investment highlights */}
-          <div className="mx-auto max-w-4xl relative">
-            <div className="absolute -inset-1 bg-[var(--primary-color-light)] rounded-[2.5rem] blur-xl opacity-60 pointer-events-none"></div>
-            <div className="relative bg-white border border-gray-200 rounded-[2.5rem] p-6 sm:p-8 md:p-14 shadow-xl">
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 sm:mb-10 text-center">What You&apos;ll Learn at the Briefing</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                {[
-                  "Detailed overview of Alaro City and the Lekki Free Zone investment landscape",
-                  "Residential, commercial, and industrial investment opportunities",
-                  "Infrastructure developments driving property value — deep sea port & international airport",
-                  "How diaspora investors are positioning for high-growth returns in Lagos",
-                  "Direct networking with fellow investors and business leaders in Chicago",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-4 sm:gap-5">
-                    <div className="mt-1 flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[var(--primary-color-light)] border border-[var(--primary-color)]/20 shrink-0">
-                      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[var(--primary-color)] shadow-sm"></div>
-                    </div>
-                    <p className="text-gray-600 text-base md:text-lg leading-relaxed font-light">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+	const handleGetTicket = () => {
+		if (isPastEvent || hasRegistered) return;
+		requireAuth(() => {
+			setIsModalOpen(true);
+		}, "register for this event");
+	};
 
-      {/* CTA to funnel */}
-      <div className="relative py-24">
-        <div className="absolute top-0 inset-x-0 h-[300px] bg-[radial-gradient(ellipse_at_top_center,_var(--primary-color-light)_0%,_transparent_50%)] opacity-40 pointer-events-none z-0"></div>
-        <div className="relative z-10 max-w-4xl mx-auto px-2 sm:px-6 text-center mb-16">
-          <p className="text-[var(--primary-color)] text-sm md:text-base tracking-[4px] uppercase mb-4 font-semibold">Limited Availability</p>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Apply for Your Invitation</h2>
-          <p className="text-gray-600 text-lg md:text-xl max-w-2xl mx-auto font-light">
-            This event is limited to 50 qualified investors. Complete the short qualification below to request your invitation.
-          </p>
-        </div>
+	const formatShortDate = (dateStr: string) => {
+		const date = new Date(dateStr);
+		return date.toLocaleDateString("en-US", {
+			weekday: "short",
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		});
+	};
 
-        {/* Qualification Funnel */}
-        <div id="apply" className="relative z-10">
-          <QualificationFunnel />
-        </div>
-      </div>
+	const formatTime = (timeStr: string) => {
+		const [hours, minutes] = timeStr.split(":");
+		const hour = parseInt(hours);
+		const ampm = hour >= 12 ? "PM" : "AM";
+		const displayHour = hour % 12 || 12;
+		return `${displayHour}:${minutes} ${ampm}`;
+	};
 
-      {/* Footer note */}
-      <div className="text-center py-12 px-4 sm:px-6 border-t border-gray-200 bg-white/40">
-        <p className="text-gray-500 text-sm uppercase tracking-widest flex max-sm:flex-col items-center justify-center gap-2 sm:gap-3">
-          <span>Hosted by Chicago Nigerians</span>
-          <span className="text-gray-300">&bull;</span>
-          <a href="https://chicagonigerians.com" className="hover:text-[var(--primary-color)] transition-colors duration-300">chicagonigerians.com</a>
-        </p>
-      </div>
-    </div>
-  );
+	const isSameDate = (date1: string, date2: string) => {
+		return new Date(date1).toDateString() === new Date(date2).toDateString();
+	};
+
+	const isSameTime = (time1: string, time2: string) => {
+		return time1 === time2;
+	};
+
+	const formatLocation = () => {
+		if (event?.venue && event?.location) {
+			return `${event.venue}, ${event.location}`;
+		}
+		return event?.location || event?.venue || "Location TBA";
+	};
+
+	const organizerName = event?.customHostedBy
+		? event.customHostedBy
+		: event?.organizer
+			? `${event.organizer.firstName} ${event.organizer.lastName}`
+			: "Unknown";
+
+	const hostInitials = event?.customHostedBy
+		? event.customHostedBy.split(' ').slice(0, 2).map((n: string) => n.charAt(0).toUpperCase()).join('')
+		: `${event?.organizer?.firstName?.charAt(0)?.toUpperCase() || ''}${event?.organizer?.lastName?.charAt(0)?.toUpperCase() || ''}`;
+
+	const shareUrl =
+		typeof window !== "undefined"
+			? `${window.location.origin}/events/${SLUG}`
+			: "";
+
+	const allMediaItems = useMemo(() => {
+		if (!event) return [];
+		const items: { type: "image"; url: string }[] = [];
+		const seen = new Set<string>();
+		if (event.coverImage) {
+			items.push({ type: "image", url: event.coverImage });
+			seen.add(event.coverImage);
+		}
+		if (event.images && event.images.length > 0) {
+			event.images.forEach((url: string) => {
+				if (!seen.has(url)) {
+					items.push({ type: "image", url });
+					seen.add(url);
+				}
+			});
+		}
+		return items;
+	}, [event]);
+
+	const openMediaViewer = (index: number) => {
+		setMediaViewerIndex(index);
+		setShowMediaViewer(true);
+	};
+
+	const renderDescriptionWithPhoneLinks = (text: string) => {
+		if (!text) return text;
+		const phoneRegex = /(\+?\d[\d\s\-().]{7,}\d)/g;
+		const parts = text.split(phoneRegex);
+		return parts.map((part, i) => {
+			if (/^\+?\d[\d\s\-().]{7,}\d$/.test(part)) {
+				const cleanNumber = part.replace(/[\s\-().]/g, '');
+				return (
+					<a key={i} href={`tel:${cleanNumber}`} className="text-[var(--primary-color)] underline hover:no-underline">
+						{part}
+					</a>
+				);
+			}
+			return part;
+		});
+	};
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center min-h-[50vh]">
+				<Loader2 className="w-8 h-8 animate-spin text-[var(--primary-color)]" />
+			</div>
+		);
+	}
+
+	if (error || !event) {
+		return (
+			<div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+				<p className="text-gray-600">Event not found</p>
+				<Link
+					href="/events"
+					className="text-[var(--primary-color)] hover:underline"
+				>
+					Back to Events
+				</Link>
+			</div>
+		);
+	}
+
+	const startDate = formatShortDate(event.startDate);
+	const endDate = formatShortDate(event.endDate);
+	const startTime = formatTime(event.startTime);
+	const endTime = event.endTime ? formatTime(event.endTime) : null;
+	const showEndDate = !isSameDate(event.startDate, event.endDate);
+	const showEndTime = endTime && !isSameTime(event.startTime, event.endTime);
+	const bannerImage = event.coverImage || "/image-placeholder.webp";
+
+	return (
+		<>
+			<main className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4 md:gap-12">
+				<section className="space-y-4 pt-4">
+					{/* Header Section */}
+					<Link href="/events" className="flex items-center gap-4">
+						<ArrowLeft />
+						<div>
+							<p>Back to events</p>
+							<p className="text-xl font-semibold">Event Details</p>
+						</div>
+					</Link>
+
+					{/* Event Image Section */}
+					<section className="bg-white rounded-xl overflow-hidden space-y-4">
+						<div
+							className="w-full bg-gray-100 relative cursor-pointer"
+							onClick={() => openMediaViewer(0)}
+						>
+							<Image
+								className="w-full h-auto"
+								src={bannerImage}
+								alt={event.title}
+								width={1200}
+								height={675}
+								priority
+								style={{ width: '100%', height: 'auto' }}
+							/>
+							<span className="absolute top-3 left-3 bg-[var(--primary-color)] text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md">
+								{event.category || "General"}
+							</span>
+							<div className="absolute right-5 top-4 flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
+								<ShareButton title={event.title} url={shareUrl} />
+							</div>
+						</div>
+
+						{event.images && event.images.length > 0 && (
+							<div className="flex gap-3 overflow-x-auto px-4 py-1 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+								{event.images.map((src: string, index: number) => (
+									<div
+										key={index}
+										className="relative flex-shrink-0 w-32 h-28 sm:w-36 sm:h-32 rounded-lg overflow-hidden bg-gray-200 cursor-pointer transition-all duration-300"
+										onClick={() => {
+											const mediaIndex = allMediaItems.findIndex((item) => item.url === src);
+											openMediaViewer(mediaIndex >= 0 ? mediaIndex : index);
+										}}
+									>
+										<Image
+											src={src}
+											alt={`Event image ${index + 1}`}
+											fill
+											className="object-cover object-center transition-transform duration-300 hover:scale-105"
+										/>
+									</div>
+								))}
+							</div>
+						)}
+					</section>
+
+					{/* Event Details Section */}
+					<section className="bg-white p-4 md:p-6 rounded-xl">
+						<div className="pb-4 border-b border-b-gray-200 space-y-4">
+							<h1 className="font-bold text-2xl">{event.title}</h1>
+
+							<div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-gray-700">
+								<div className="flex items-center gap-2">
+									<Calendar className="w-5 h-5 text-[var(--primary-color)] flex-shrink-0" />
+									<span>
+										{startDate}
+										{showEndDate && ` - ${endDate}`}
+									</span>
+								</div>
+
+								<div className="flex items-center gap-2">
+									<Clock className="w-5 h-5 text-[var(--primary-color)] flex-shrink-0" />
+									<span>
+										{startTime}
+										{showEndTime && ` - ${endTime}`}
+									</span>
+								</div>
+
+								<div className="flex items-center gap-2">
+									<MapPin className="w-5 h-5 text-[var(--primary-color)] flex-shrink-0" />
+									<span>{formatLocation()}</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Description */}
+						<div className="py-4 border-b border-b-gray-200">
+							<h2 className="font-semibold text-lg mb-2">About this event</h2>
+							<p className="text-gray-600 whitespace-pre-wrap">
+								{renderDescriptionWithPhoneLinks(event.description)}
+							</p>
+						</div>
+
+						{/* Hosted By */}
+						<div className="py-4 border-b border-b-gray-200">
+							<h2 className="font-semibold text-lg mb-2">Hosted by</h2>
+							<div className="flex items-center gap-3">
+								<div className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--primary-color)] text-white">
+									<span className="font-semibold">
+										{hostInitials}
+									</span>
+								</div>
+								<div>
+									<p className="font-medium">{organizerName}</p>
+									<p className="text-sm text-gray-500">Event Organizer</p>
+								</div>
+							</div>
+						</div>
+
+						{/* Spots and Price */}
+						<div className="pt-4 flex flex-wrap items-center justify-between gap-4">
+							<div className="flex items-center gap-2 text-sm">
+								{event.isFree && !event.totalTickets ? (
+									<div className="flex items-center gap-2 text-gray-600">
+										<Infinity className="w-5 h-5 text-[var(--primary-color)]" />
+										<span className="font-medium">Unlimited spots</span>
+									</div>
+								) : (
+									<div className="flex items-center gap-2 text-gray-600">
+										<Ticket className="w-5 h-5 text-[var(--primary-color)]" />
+										<span>
+											<span className="font-semibold text-gray-900">
+												{event.availableTickets}
+											</span>{" "}
+											spots left
+										</span>
+									</div>
+								)}
+							</div>
+
+							<div>
+								{event.isFree ? (
+									<span className="text-[var(--primary-color)] text-2xl font-bold">
+										FREE
+									</span>
+								) : (
+									<span className="text-[var(--primary-color)] text-2xl font-bold">
+										${event.ticketPrice}
+									</span>
+								)}
+							</div>
+						</div>
+					</section>
+
+					{/* Mobile CTA Button */}
+					<div className="lg:hidden">
+						{isPastEvent ? (
+							<span className="block w-full py-3 bg-gray-200 text-gray-500 text-center font-semibold rounded-lg cursor-not-allowed">
+								Registration Closed
+							</span>
+						) : hasRegistered ? (
+							<span className="block w-full py-3 bg-emerald-100 text-emerald-700 text-center font-semibold rounded-lg cursor-not-allowed">
+								Already Registered
+							</span>
+						) : (
+							<button
+								onClick={handleGetTicket}
+								className="w-full py-3 bg-[var(--primary-color)] text-white font-semibold rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors"
+							>
+								{event.isFree ? "Register for Free" : "Get Ticket"}
+							</button>
+						)}
+					</div>
+				</section>
+
+				{/* Right Sidebar - Desktop Only */}
+				<section className="hidden lg:block mt-4 space-y-4 sticky top-20 h-fit pt-4">
+					<div className="bg-white p-6 rounded-xl shadow-sm">
+						<h3 className="font-semibold text-lg mb-4">Get your ticket</h3>
+
+						<div className="space-y-3 text-sm text-gray-600 mb-6">
+							<div className="flex items-center gap-2">
+								<Calendar className="w-4 h-4 text-[var(--primary-color)]" />
+								<span>{startDate}</span>
+							</div>
+							<div className="flex items-center gap-2">
+								<Clock className="w-4 h-4 text-[var(--primary-color)]" />
+								<span>{startTime}</span>
+							</div>
+							<div className="flex items-center gap-2">
+								<MapPin className="w-4 h-4 text-[var(--primary-color)]" />
+								<span className="line-clamp-2">{formatLocation()}</span>
+							</div>
+						</div>
+
+						<div className="py-4 border-t border-b border-gray-200 mb-4">
+							<div className="flex items-center justify-between">
+								<span className="text-gray-600">Price</span>
+								{event.isFree ? (
+									<span className="text-[var(--primary-color)] text-xl font-bold">
+										FREE
+									</span>
+								) : (
+									<span className="text-[var(--primary-color)] text-xl font-bold">
+										${event.ticketPrice}
+									</span>
+								)}
+							</div>
+						</div>
+
+						{isPastEvent ? (
+							<span className="block w-full py-3 bg-gray-200 text-gray-500 text-center font-semibold rounded-lg cursor-not-allowed">
+								Registration Closed
+							</span>
+						) : hasRegistered ? (
+							<span className="block w-full py-3 bg-emerald-100 text-emerald-700 text-center font-semibold rounded-lg cursor-not-allowed">
+								Already Registered
+							</span>
+						) : (
+							<button
+								onClick={handleGetTicket}
+								className="w-full py-3 bg-[var(--primary-color)] text-white font-semibold rounded-lg hover:bg-[var(--primary-color)]/90 transition-colors"
+							>
+								{event.isFree ? "Register for Free" : "Get Ticket"}
+							</button>
+						)}
+
+						{!event.isFree && !isPastEvent && (
+							<p className="text-center text-sm text-gray-500 mt-3">
+								Only {event.availableTickets} spots left
+							</p>
+						)}
+					</div>
+
+					{/* Organizer Card */}
+					<div className="bg-white p-6 rounded-xl shadow-sm">
+						<h3 className="font-semibold text-lg mb-4">About the organizer</h3>
+						<div className="flex items-center gap-3">
+							<div className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--primary-color)] text-white">
+								<span className="font-semibold">
+									{hostInitials}
+								</span>
+							</div>
+							<div>
+								<p className="font-medium">{organizerName}</p>
+								<p className="text-sm text-gray-500">Event Organizer</p>
+							</div>
+						</div>
+					</div>
+				</section>
+			</main>
+
+			{/* Ticket Registration Modal */}
+			{isModalOpen && (
+				<TicketRegistrationModal
+					event={event}
+					onClose={() => setIsModalOpen(false)}
+					onRegistrationSuccess={() => setHasRegistered(true)}
+				/>
+			)}
+
+			{/* Image Viewer */}
+			<MediaViewer
+				isOpen={showMediaViewer}
+				onClose={() => setShowMediaViewer(false)}
+				media={allMediaItems}
+				initialIndex={mediaViewerIndex}
+			/>
+		</>
+	);
 }
