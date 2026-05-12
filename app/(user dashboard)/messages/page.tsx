@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   Search,
@@ -30,11 +31,20 @@ type ChatUser = {
   location?: string | null;
 };
 
+type ListingPreview = {
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  currency: string;
+};
+
 type ChatMessage = {
   id: string;
   content: string;
   images: string[];
   videos: string[];
+  listingPreview?: ListingPreview | null;
   isRead: boolean;
   readAt?: string | null;
   senderId: string;
@@ -59,6 +69,7 @@ type Conversation = {
     content: string;
     images: string[];
     videos: string[];
+    listingPreview?: ListingPreview | null;
     senderId: string;
     receiverId: string;
     isRead: boolean;
@@ -196,6 +207,7 @@ const formatMessageDayLabel = (value: string) => {
 
 const conversationPreview = (conversation: Conversation) => {
   if (conversation.lastMessage.content) return conversation.lastMessage.content;
+  if (conversation.lastMessage.listingPreview) return "Shared a listing";
   if ((conversation.lastMessage.images || []).length && (conversation.lastMessage.videos || []).length) {
     return "Shared media";
   }
@@ -258,6 +270,7 @@ const upsertConversationFromMessage = (
       content: message.content,
       images: message.images || [],
       videos: message.videos || [],
+      listingPreview: message.listingPreview,
       senderId: message.senderId,
       receiverId: message.receiverId,
       isRead: message.isRead,
@@ -310,6 +323,7 @@ export default function MessagesPage() {
   const [streamConnected, setStreamConnected] = useState(false);
   const [isMobileChatView, setIsMobileChatView] = useState(false);
   const [expandedImageUrl, setExpandedImageUrl] = useState<string | null>(null);
+  const [pendingListingPreview, setPendingListingPreview] = useState<ListingPreview | null>(null);
   const [storageHydrated, setStorageHydrated] = useState(false);
   const [restoredFromCache, setRestoredFromCache] = useState(false);
 
@@ -965,6 +979,21 @@ export default function MessagesPage() {
     }
   }, [deepLinkUserId]);
 
+  // Read listing preview from URL params when deep-linking from marketplace
+  useEffect(() => {
+    const listingId = searchParams.get("listingId");
+    const listingTitle = searchParams.get("listingTitle");
+    if (listingId && listingTitle) {
+      setPendingListingPreview({
+        id: listingId,
+        title: listingTitle,
+        price: Number(searchParams.get("listingPrice") || 0),
+        image: searchParams.get("listingImage") || "",
+        currency: searchParams.get("listingCurrency") || "USD",
+      });
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (!authUserId || !deepLinkUserId) return;
     if (deepLinkUserId === authUserId) return;
@@ -1039,6 +1068,7 @@ export default function MessagesPage() {
   }, []);
 
   const handleChooseFiles = () => {
+    if (pendingListingPreview) return;
     fileInputRef.current?.click();
   };
 
@@ -1062,13 +1092,16 @@ export default function MessagesPage() {
   };
 
   const sendMessageRequest = useCallback(
-    async (receiverId: string, content: string, files: File[]) => {
+    async (receiverId: string, content: string, files: File[], listingPreview?: ListingPreview | null) => {
       const formData = new FormData();
       formData.append("receiverId", receiverId);
       if (content.trim()) {
         formData.append("content", content.trim());
       }
       files.forEach((file) => formData.append("media", file));
+      if (listingPreview) {
+        formData.append("listingPreview", JSON.stringify(listingPreview));
+      }
 
       return callApi<SendMessageResponse>("/messages", "POST", formData);
     },
@@ -1080,7 +1113,8 @@ export default function MessagesPage() {
 
     const trimmed = messageInput.trim();
     const filesSnapshot = [...selectedFiles];
-    if (!trimmed && filesSnapshot.length === 0) return;
+    const listingSnapshot = pendingListingPreview;
+    if (!trimmed && filesSnapshot.length === 0 && !listingSnapshot) return;
 
     const imagePreviewUrls = filesSnapshot
       .filter((file) => file.type.startsWith("image/"))
@@ -1095,6 +1129,7 @@ export default function MessagesPage() {
       content: trimmed,
       images: imagePreviewUrls,
       videos: videoPreviewUrls,
+      listingPreview: listingSnapshot,
       isRead: false,
       readAt: null,
       senderId: authUserId,
@@ -1121,10 +1156,11 @@ export default function MessagesPage() {
     );
     setMessageInput("");
     setSelectedFiles([]);
+    setPendingListingPreview(null);
     setTimeout(scrollToBottom, 30);
 
     setSending(true);
-    const { data, error } = await sendMessageRequest(activeConversationId, trimmed, filesSnapshot);
+    const { data, error } = await sendMessageRequest(activeConversationId, trimmed, filesSnapshot, listingSnapshot);
     setSending(false);
 
     if (error) {
@@ -1558,6 +1594,36 @@ export default function MessagesPage() {
                                 </div>
                               )}
 
+                              {message.listingPreview && (
+                                <Link
+                                  href={`/marketplace/${message.listingPreview.id}`}
+                                  className={`flex flex-col w-fit items-center gap-1 rounded-xl border p-2 transition hover:opacity-80 ${
+                                    isMine
+                                      ? "border-emerald-600 bg-emerald-800"
+                                      : "border-gray-200 bg-gray-50"
+                                  }`}
+                                >
+                                  {message.listingPreview.image && (
+                                    <Image
+                                      src={message.listingPreview.image}
+                                      alt={message.listingPreview.title}
+                                      width={64}
+                                      height={64}
+                                      className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                                    />
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <p className={`text-sm font-medium line-clamp-1 ${isMine ? "text-white" : "text-gray-900"}`}>
+                                      {message.listingPreview.title}
+                                    </p>
+                                    <p className={`text-xs font-semibold mt-0.5 ${isMine ? "text-emerald-200" : "text-emerald-600"}`}>
+                                      {message.listingPreview.currency === "NGN" ? "₦" : "$"}
+                                      {Number(message.listingPreview.price).toLocaleString()}
+                                    </p>
+                                  </div>
+                                </Link>
+                              )}
+
                               {message.content && (
                                 <div
                                   className={`rounded-2xl px-4 py-3 shadow-sm ${
@@ -1625,6 +1691,37 @@ export default function MessagesPage() {
               </div>
 
               <footer className="border-t border-gray-200 bg-white px-2 py-3">
+                {pendingListingPreview && (
+                  <div className="mb-3 flex w-fit max-w-[80%] items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-2">
+                    {pendingListingPreview.image && (
+                      <Link href={`/marketplace/${pendingListingPreview.id}`} target="_blank" className="shrink-0">
+                        <Image
+                          src={pendingListingPreview.image}
+                          alt={pendingListingPreview.title}
+                          width={48}
+                          height={48}
+                          className="h-12 w-12 rounded-lg object-cover"
+                        />
+                      </Link>
+                    )}
+                    <Link href={`/marketplace/${pendingListingPreview.id}`} target="_blank" className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 line-clamp-1">{pendingListingPreview.title}</p>
+                      <p className="text-xs font-semibold text-emerald-600">
+                        {pendingListingPreview.currency === "NGN" ? "₦" : "$"}
+                        {Number(pendingListingPreview.price).toLocaleString()}
+                      </p>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setPendingListingPreview(null)}
+                      className="shrink-0 rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+                      aria-label="Remove listing preview"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+
                 {selectedFilePreviews.length > 0 && (
                   <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                     {selectedFilePreviews.map((item, index) => (
@@ -1678,7 +1775,8 @@ export default function MessagesPage() {
 
                   <button
                     onClick={handleChooseFiles}
-                    className="rounded-lg p-1 text-gray-600 hover:bg-gray-100"
+                    disabled={!!pendingListingPreview}
+                    className={`rounded-lg p-1 ${pendingListingPreview ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
                     title="Attach files"
                   >
                     <Paperclip className="h-5 w-5" />
@@ -1694,7 +1792,7 @@ export default function MessagesPage() {
 
                   <button
                     onClick={() => void handleSendMessage()}
-                    disabled={sending || (!messageInput.trim() && selectedFiles.length === 0)}
+                    disabled={sending || (!messageInput.trim() && selectedFiles.length === 0 && !pendingListingPreview)}
                     className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                     title="Send message"
                   >

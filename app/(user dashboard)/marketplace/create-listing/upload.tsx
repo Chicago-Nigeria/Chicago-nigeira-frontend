@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { Image as ImageIcon, Upload, X, Plus } from "lucide-react";
 import Image from "next/image";
+import ImageCropper from "@/app/components/ui/ImageCropper";
+import { IMAGE_CONFIG } from "@/app/utils/image";
 
 type CustomPhotoInputProps = {
 	name: string;
@@ -13,6 +15,9 @@ type CustomPhotoInputProps = {
 export function CustomPhotoInput({ name, label, multiple = false, className }: CustomPhotoInputProps) {
 	const { setValue, watch } = useFormContext();
 	const [previews, setPreviews] = useState<string[]>([]);
+	const [cropSrc, setCropSrc] = useState<string | null>(null);
+	const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+	const [cropIndex, setCropIndex] = useState(0);
 	const files = watch(name) as FileList | File[] | null;
 
 	// Create previews when files change
@@ -36,27 +41,61 @@ export function CustomPhotoInput({ name, label, multiple = false, className }: C
 		const selectedFiles = e.target.files;
 		if (selectedFiles && selectedFiles.length > 0) {
 			const newFiles = Array.from(selectedFiles);
-
-			if (multiple) {
-				const existingFiles = files ? Array.from(files as Iterable<File>) : [];
-				const combinedFiles = [...existingFiles, ...newFiles];
-
-				// Limit to 8 files
-				const slicedFiles = combinedFiles.slice(0, 8);
-
-				if (slicedFiles.length > 8) {
-					// Optional: Toast warning? For now just slice. 
-					// Ideally we should warn user.
-				}
-
-				setValue(name, slicedFiles, { shouldValidate: true, shouldDirty: true });
-			} else {
-				setValue(name, selectedFiles, { shouldValidate: true, shouldDirty: true });
-			}
+			// Start cropping flow for each file
+			setPendingFiles(newFiles);
+			setCropIndex(0);
+			const url = URL.createObjectURL(newFiles[0]);
+			setCropSrc(url);
 		}
 
 		// Reset input so same file can be selected again if needed
 		e.target.value = "";
+	};
+
+	const handleCropComplete = (blob: Blob) => {
+		const croppedFile = new File([blob], pendingFiles[cropIndex].name, { type: "image/jpeg" });
+
+		if (cropSrc) URL.revokeObjectURL(cropSrc);
+
+		const nextIndex = cropIndex + 1;
+
+		if (nextIndex < pendingFiles.length) {
+			// More files to crop
+			setCropIndex(nextIndex);
+			setCropSrc(URL.createObjectURL(pendingFiles[nextIndex]));
+
+			// Store cropped file in pending array (replace original)
+			setPendingFiles((prev) => {
+				const updated = [...prev];
+				updated[cropIndex] = croppedFile;
+				return updated;
+			});
+		} else {
+			// All files cropped — commit to form
+			const allCropped = [...pendingFiles.slice(0, cropIndex).map((_, i) => i === cropIndex ? croppedFile : pendingFiles[i]), croppedFile];
+			// Actually build final array properly
+			const finalFiles = pendingFiles.map((f, i) => i === cropIndex ? croppedFile : i < cropIndex ? pendingFiles[i] : f);
+			// pendingFiles already has earlier crops replaced, just replace current
+			const updatedPending = [...pendingFiles];
+			updatedPending[cropIndex] = croppedFile;
+
+			if (multiple) {
+				const existingFiles = files ? Array.from(files as Iterable<File>) : [];
+				const combinedFiles = [...existingFiles, ...updatedPending].slice(0, 8);
+				setValue(name, combinedFiles, { shouldValidate: true, shouldDirty: true });
+			} else {
+				setValue(name, [updatedPending[0]], { shouldValidate: true, shouldDirty: true });
+			}
+
+			setCropSrc(null);
+			setPendingFiles([]);
+		}
+	};
+
+	const handleCropCancel = () => {
+		if (cropSrc) URL.revokeObjectURL(cropSrc);
+		setCropSrc(null);
+		setPendingFiles([]);
 	};
 
 	const handleRemoveFile = (index: number) => {
@@ -171,6 +210,16 @@ export function CustomPhotoInput({ name, label, multiple = false, className }: C
 					disabled={multiple && previews.length >= 8}
 				/>
 			</label>
+
+			{/* Crop Modal */}
+			{cropSrc && (
+				<ImageCropper
+					imageSrc={cropSrc}
+					aspect={IMAGE_CONFIG.listing.aspect}
+					onCropComplete={handleCropComplete}
+					onCancel={handleCropCancel}
+				/>
+			)}
 		</div>
 	);
 }

@@ -8,6 +8,8 @@ import Image from "next/image";
 import { Upload, User, Loader2, Save, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "@/app/store/useSession";
+import ImageCropper from "@/app/components/ui/ImageCropper";
+import { IMAGE_CONFIG } from "@/app/utils/image";
 import { callApi } from "@/app/libs/helper/callApi";
 import { ApiResponse, IUser } from "@/app/types";
 import FormFieldErrorMessage from "@/app/components/fieldError";
@@ -91,31 +93,39 @@ export default function ProfileSettings() {
 		};
 	}, [previewUrl, headerPreviewUrl]);
 
+	const [profileCropSrc, setProfileCropSrc] = useState<string | null>(null);
+
 	const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
 
-		// Validate file size (max 5MB)
 		if (file.size > 5 * 1024 * 1024) {
 			toast.error("Image size must be less than 5MB");
 			return;
 		}
 
-		// Validate file type
 		if (!file.type.startsWith("image/")) {
 			toast.error("Please upload an image file (JPG, PNG)");
 			return;
 		}
 
-		// Clean up previous preview URL
-		if (previewUrl) {
-			URL.revokeObjectURL(previewUrl);
-		}
+		setProfileCropSrc(URL.createObjectURL(file));
+		if (fileInputRef.current) fileInputRef.current.value = "";
+	};
 
-		// Create preview URL
-		const preview = URL.createObjectURL(file);
-		setPreviewUrl(preview);
-		setSelectedFile(file);
+	const handleProfileCropComplete = (blob: Blob) => {
+		if (profileCropSrc) URL.revokeObjectURL(profileCropSrc);
+		setProfileCropSrc(null);
+
+		const croppedFile = new File([blob], "profile.jpg", { type: "image/jpeg" });
+		if (previewUrl) URL.revokeObjectURL(previewUrl);
+		setPreviewUrl(URL.createObjectURL(croppedFile));
+		setSelectedFile(croppedFile);
+	};
+
+	const handleProfileCropCancel = () => {
+		if (profileCropSrc) URL.revokeObjectURL(profileCropSrc);
+		setProfileCropSrc(null);
 	};
 
 	const handleImageUpload = async () => {
@@ -172,31 +182,39 @@ export default function ProfileSettings() {
 	};
 
 	// Header image handlers
+	const [headerCropSrc, setHeaderCropSrc] = useState<string | null>(null);
+
 	const handleHeaderFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
 
-		// Validate file size (max 10MB for header images)
 		if (file.size > 10 * 1024 * 1024) {
 			toast.error("Header image size must be less than 10MB");
 			return;
 		}
 
-		// Validate file type
 		if (!file.type.startsWith("image/")) {
 			toast.error("Please upload an image file (JPG, PNG)");
 			return;
 		}
 
-		// Clean up previous preview URL
-		if (headerPreviewUrl) {
-			URL.revokeObjectURL(headerPreviewUrl);
-		}
+		setHeaderCropSrc(URL.createObjectURL(file));
+		if (headerFileInputRef.current) headerFileInputRef.current.value = "";
+	};
 
-		// Create preview URL
-		const preview = URL.createObjectURL(file);
-		setHeaderPreviewUrl(preview);
-		setSelectedHeaderFile(file);
+	const handleHeaderCropComplete = (blob: Blob) => {
+		if (headerCropSrc) URL.revokeObjectURL(headerCropSrc);
+		setHeaderCropSrc(null);
+
+		const croppedFile = new File([blob], "header.jpg", { type: "image/jpeg" });
+		if (headerPreviewUrl) URL.revokeObjectURL(headerPreviewUrl);
+		setHeaderPreviewUrl(URL.createObjectURL(croppedFile));
+		setSelectedHeaderFile(croppedFile);
+	};
+
+	const handleHeaderCropCancel = () => {
+		if (headerCropSrc) URL.revokeObjectURL(headerCropSrc);
+		setHeaderCropSrc(null);
 	};
 
 	const handleHeaderImageUpload = async () => {
@@ -582,6 +600,26 @@ export default function ProfileSettings() {
 					)}
 				</button>
 			</div>
+
+			{/* Profile Photo Crop Modal */}
+			{profileCropSrc && (
+				<ImageCropper
+					imageSrc={profileCropSrc}
+					aspect={IMAGE_CONFIG.profile.aspect}
+					onCropComplete={handleProfileCropComplete}
+					onCancel={handleProfileCropCancel}
+				/>
+			)}
+
+			{/* Header Image Crop Modal */}
+			{headerCropSrc && (
+				<ImageCropper
+					imageSrc={headerCropSrc}
+					aspect={IMAGE_CONFIG.header.width / IMAGE_CONFIG.header.height}
+					onCropComplete={handleHeaderCropComplete}
+					onCancel={handleHeaderCropCancel}
+				/>
+			)}
 		</form>
 	);
 }

@@ -22,6 +22,7 @@ import { useSession } from "@/app/store/useSession";
 import { useQuery } from "@tanstack/react-query";
 import { callApi } from "@/app/libs/helper/callApi";
 import { ApiResponse } from "@/app/types";
+import { autolinkText } from "@/app/libs/helper/autolink";
 
 type AttendingEventLite = {
 	id: string;
@@ -156,23 +157,8 @@ export default function EventDetail() {
 		setShowMediaViewer(true);
 	};
 
-	// Auto-link phone numbers in description text
-	const renderDescriptionWithPhoneLinks = (text: string) => {
-		if (!text) return text;
-		const phoneRegex = /(\+?\d[\d\s\-().]{7,}\d)/g;
-		const parts = text.split(phoneRegex);
-		return parts.map((part, i) => {
-			if (/^\+?\d[\d\s\-().]{7,}\d$/.test(part)) {
-				const cleanNumber = part.replace(/[\s\-().]/g, '');
-				return (
-					<a key={i} href={`tel:${cleanNumber}`} className="text-[var(--primary-color)] underline hover:no-underline">
-						{part}
-					</a>
-				);
-			}
-			return part;
-		});
-	};
+	// Auto-link phone numbers and URLs in description text
+	const renderDescriptionWithPhoneLinks = (text: string) => autolinkText(text);
 
 	if (isLoading) {
 		return (

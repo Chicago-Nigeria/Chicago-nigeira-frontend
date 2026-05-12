@@ -329,7 +329,7 @@ export default function PostCard({ post, showFollowButton = true }: PostCardProp
             <div
               className={`mt-4 rounded-xl overflow-hidden ${
                 post.images.length === 1
-                  ? "max-h-96"
+                  ? ""
                   : "grid grid-cols-2 gap-1"
               }`}
             >
@@ -337,18 +337,32 @@ export default function PostCard({ post, showFollowButton = true }: PostCardProp
                 <div
                   key={index}
                   className={`relative ${
-                    post.images.length === 1 ? "w-full h-72" : "aspect-square"
-                  } bg-gray-100 cursor-pointer`}
+                    post.images.length === 1 ? "w-full" : "aspect-square"
+                  } bg-gray-100 cursor-pointer overflow-hidden`}
                   onClick={() => openMediaViewer(index)}
                 >
-                  <Image
-                    src={image}
-                    alt={`Post image ${index + 1}`}
-                    fill
-                    className="object-cover hover:opacity-95 transition-opacity"
-                  />
+                  {/* Shimmer placeholder */}
+                  <div className="absolute inset-0 shimmer-loading z-0" />
+                  {post.images.length === 1 ? (
+                    <Image
+                      src={image}
+                      alt={`Post image ${index + 1}`}
+                      width={1200}
+                      height={1200}
+                      className="w-full h-auto object-contain z-[1] hover:opacity-95 transition-opacity"
+                      sizes="(max-width: 768px) 100vw, 600px"
+                    />
+                  ) : (
+                    <Image
+                      src={image}
+                      alt={`Post image ${index + 1}`}
+                      fill
+                      className="object-cover hover:opacity-95 transition-opacity z-[1]"
+                      sizes="(max-width: 768px) 50vw, 300px"
+                    />
+                  )}
                   {index === 3 && post.images.length > 4 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center hover:bg-black/40 transition-colors">
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center hover:bg-black/40 transition-colors z-[2]">
                       <span className="text-white text-xl font-semibold">
                         +{post.images.length - 4}
                       </span>

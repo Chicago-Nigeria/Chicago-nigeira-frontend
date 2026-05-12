@@ -110,13 +110,14 @@ export default function EventCard({ event, isRegistered = false }: EventCardProp
 		<>
 			<div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
 				{/* Banner Image Section */}
-				<div className="relative h-52 w-full bg-gray-50">
+				<div className="relative aspect-video w-full bg-gray-50">
+					<div className="absolute inset-0 shimmer-loading z-0" />
 					<Link href={`/events/${event.slug || event.id}`}>
 						<Image
 							src={bannerImage}
 							alt={event.title}
 							fill
-							className="object-cover cursor-pointer"
+							className="object-cover cursor-pointer z-[1]"
 							sizes="(max-width: 768px) 100vw, 600px"
 						/>
 					</Link>

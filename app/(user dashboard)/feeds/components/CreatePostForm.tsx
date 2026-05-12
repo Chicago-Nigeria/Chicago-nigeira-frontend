@@ -5,6 +5,8 @@ import { Camera, Video, X, Send, Loader2 } from "lucide-react";
 import { useSession } from "@/app/store/useSession";
 import { useAuthGuard } from "@/app/hooks/useAuthGuard";
 import { useCreatePost } from "@/app/hooks/usePost";
+import ImageCropper from "@/app/components/ui/ImageCropper";
+import { IMAGE_CONFIG } from "@/app/utils/image";
 
 export default function CreatePostForm() {
   const { user } = useSession((state) => state);
@@ -16,6 +18,9 @@ export default function CreatePostForm() {
   const [previews, setPreviews] = useState<
     { url: string; type: "image" | "video" }[]
   >([]);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
+  const [cropIndex, setCropIndex] = useState(0);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -26,18 +31,48 @@ export default function CreatePostForm() {
   ) => {
     const files = Array.from(e.target.files || []);
 
-    const newPreviews = files.map((file) => ({
-      url: URL.createObjectURL(file),
-      type: file.type.startsWith("video/")
-        ? ("video" as const)
-        : ("image" as const),
-    }));
-
-    setSelectedFiles((prev) => [...prev, ...files]);
-    setPreviews((prev) => [...prev, ...newPreviews]);
+    if (type === "video") {
+      const newPreviews = files.map((file) => ({
+        url: URL.createObjectURL(file),
+        type: "video" as const,
+      }));
+      setSelectedFiles((prev) => [...prev, ...files]);
+      setPreviews((prev) => [...prev, ...newPreviews]);
+    } else {
+      // Start crop flow for images
+      setPendingImageFiles(files);
+      setCropIndex(0);
+      setCropSrc(URL.createObjectURL(files[0]));
+    }
 
     // Reset input
     e.target.value = "";
+  };
+
+  const handleCropComplete = (blob: Blob) => {
+    const croppedFile = new File([blob], pendingImageFiles[cropIndex].name, { type: "image/jpeg" });
+
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+
+    // Add cropped file + preview
+    const preview = URL.createObjectURL(croppedFile);
+    setSelectedFiles((prev) => [...prev, croppedFile]);
+    setPreviews((prev) => [...prev, { url: preview, type: "image" }]);
+
+    const nextIndex = cropIndex + 1;
+    if (nextIndex < pendingImageFiles.length) {
+      setCropIndex(nextIndex);
+      setCropSrc(URL.createObjectURL(pendingImageFiles[nextIndex]));
+    } else {
+      setCropSrc(null);
+      setPendingImageFiles([]);
+    }
+  };
+
+  const handleCropCancel = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+    setPendingImageFiles([]);
   };
 
   const removeFile = (index: number) => {
@@ -172,6 +207,15 @@ export default function CreatePostForm() {
           <span>Post</span>
         </button>
       </div>
+
+      {/* Crop Modal — no forced aspect, let user crop freely */}
+      {cropSrc && (
+        <ImageCropper
+          imageSrc={cropSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }

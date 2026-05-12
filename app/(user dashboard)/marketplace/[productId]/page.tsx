@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useGetListingById, useGetRelatedListings } from "@/app/hooks/useListing";
 import { formatRelativeDate } from "@/app/libs/helper/date";
@@ -23,6 +23,33 @@ import { useAuthGuard } from "@/app/hooks/useAuthGuard";
 import { callApi } from "@/app/libs/helper/callApi";
 import { toast } from "sonner";
 import ShareButton from "../../components/shareButton";
+
+const URL_REGEX = /https?:\/\/[^\s]+/g;
+
+function linkifyText(text: string | undefined | null) {
+	if (!text) return null;
+	const parts = text.split(URL_REGEX);
+	const matches = text.match(URL_REGEX);
+	if (!matches) return text;
+	const result: (string | JSX.Element)[] = [];
+	parts.forEach((part, i) => {
+		result.push(part);
+		if (matches[i]) {
+			result.push(
+				<a
+					key={i}
+					href={matches[i]}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-[var(--primary-color)] hover:underline break-all"
+				>
+					{matches[i]}
+				</a>
+			);
+		}
+	});
+	return result;
+}
 
 export default function ProductDetail() {
 	const { productId } = useParams();
@@ -33,6 +60,7 @@ export default function ProductDetail() {
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
 	const [isLiked, setIsLiked] = useState(false);
 	const [isLiking, setIsLiking] = useState(false);
+	const router = useRouter();
 	const { requireAuth } = useAuthGuard();
 
 	// Set initial liked state from backend
@@ -87,7 +115,19 @@ export default function ProductDetail() {
 
 	const handleMessage = () => {
 		requireAuth(() => {
-			window.location.href = "/messages";
+			if (!product) return;
+			const seller = product.seller || product.user;
+			const sellerId = seller?.id || (seller as any)?._id || product.userId;
+			if (!sellerId) return;
+			const params = new URLSearchParams({
+				userId: sellerId,
+				listingId: product.id || (productId as string),
+				listingTitle: product.title || "",
+				listingPrice: String(product.price ?? 0),
+				listingImage: (productImages[0] || ""),
+				listingCurrency: product.currency || "USD",
+			});
+			router.push(`/messages?${params.toString()}`);
 		}, "message this seller");
 	};
 
@@ -134,12 +174,13 @@ export default function ProductDetail() {
 				{/* Main Image Section */}
 				<section className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
 					{/* Main Image */}
-					<div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[28rem] bg-gray-100">
+					<div className="relative w-full bg-gray-100 flex items-center justify-center md:max-h-[32rem] overflow-hidden">
 						<Image
-							className={`object-cover object-center w-full h-full ${product.status === 'sold' ? 'opacity-70' : ''}`}
+							className={`w-full h-auto object-contain md:max-h-[32rem] ${product.status === 'sold' ? 'opacity-70' : ''}`}
 							src={images[currentImageIndex]}
 							alt={product.title}
-							fill
+							width={1000}
+							height={1000}
 							priority
 						/>
 
@@ -266,8 +307,8 @@ export default function ProductDetail() {
 					{/* Description */}
 					<div className="pt-4">
 						<h2 className="font-semibold text-gray-900 mb-2">Description</h2>
-						<div className="text-sm text-gray-600 space-y-2 whitespace-pre-wrap">
-							<p>{product.description}</p>
+						<div className="text-sm text-gray-600 space-y-2 whitespace-pre-wrap break-words">
+							<p>{linkifyText(product.description)}</p>
 						</div>
 					</div>
 

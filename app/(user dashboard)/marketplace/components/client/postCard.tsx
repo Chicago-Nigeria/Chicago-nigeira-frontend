@@ -33,13 +33,14 @@ export const PostCard = ({ post }: { post: IListing }) => {
 			className="block rounded-xl overflow-hidden bg-white border border-gray-200 hover:shadow-md transition-all duration-200"
 		>
 			{/* Image Section */}
-			<div className="h-48 bg-gray-100 relative">
+			<div className="aspect-square bg-gray-100 relative">
+				<div className="absolute inset-0 shimmer-loading z-0" />
 				<Image
-					className={`object-cover object-center w-full h-full ${post.status === 'sold' ? 'opacity-70' : ''}`}
+					className={`object-cover object-center z-[1] ${post.status === 'sold' ? 'opacity-70' : ''}`}
 					src={imageUrl}
-					height={400}
-					width={300}
+					fill
 					alt={post.title}
+					sizes="(max-width: 768px) 50vw, 300px"
 				/>
 				{/* Sold Badge */}
 				{post.status === 'sold' && (
@@ -136,8 +137,8 @@ export const PostCard = ({ post }: { post: IListing }) => {
 };
 
 export const PostCardSkeleton = () => (
-	<div className="rounded-xl overflow-hidden bg-white border border-gray-100 animate-pulse">
-		<div className="h-48 bg-gray-200" />
+	<div className="rounded-xl overflow-hidden bg-white border border-gray-100">
+		<div className="aspect-square shimmer-loading" />
 		<div className="p-4 space-y-3">
 			<div className="flex justify-between">
 				<div className="h-5 bg-gray-200 rounded w-16" />

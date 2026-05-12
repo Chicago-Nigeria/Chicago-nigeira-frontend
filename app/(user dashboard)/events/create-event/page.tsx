@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Upload, MapPin, Calendar, X, Info, Loader2 } from "lucide-react";
 import { useSession } from "@/app/store/useSession";
 import { useAuthModal } from "@/app/store/useAuthModal";
+import ImageCropper from "@/app/components/ui/ImageCropper";
+import { IMAGE_CONFIG } from "@/app/utils/image";
 import { callApi } from "@/app/libs/helper/callApi";
 import { ApiResponse } from "@/app/types";
 import { toast } from "sonner";
@@ -168,7 +170,9 @@ function CreateEventForm() {
 		}
 	}, [watchedTotalTickets, isFree]);
 
-	// Handle image selection
+	const [cropSrc, setCropSrc] = useState<string | null>(null);
+
+	// Handle image selection — opens cropper
 	const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
@@ -183,13 +187,26 @@ function CreateEventForm() {
 			return;
 		}
 
-		if (previewUrl) {
-			URL.revokeObjectURL(previewUrl);
-		}
+		setCropSrc(URL.createObjectURL(file));
 
-		const preview = URL.createObjectURL(file);
-		setPreviewUrl(preview);
-		setSelectedImage(file);
+		if (fileInputRef.current) fileInputRef.current.value = "";
+	};
+
+	const handleCropComplete = (blob: Blob) => {
+		if (cropSrc) URL.revokeObjectURL(cropSrc);
+		setCropSrc(null);
+
+		const croppedFile = new File([blob], "event-cover.jpg", { type: "image/jpeg" });
+
+		if (previewUrl) URL.revokeObjectURL(previewUrl);
+
+		setPreviewUrl(URL.createObjectURL(croppedFile));
+		setSelectedImage(croppedFile);
+	};
+
+	const handleCropCancel = () => {
+		if (cropSrc) URL.revokeObjectURL(cropSrc);
+		setCropSrc(null);
 	};
 
 	const removeImage = () => {
@@ -705,6 +722,16 @@ function CreateEventForm() {
 					</button>
 				</div>
 			</form>
+
+			{/* Crop Modal */}
+			{cropSrc && (
+				<ImageCropper
+					imageSrc={cropSrc}
+					aspect={IMAGE_CONFIG.event.aspect}
+					onCropComplete={handleCropComplete}
+					onCancel={handleCropCancel}
+				/>
+			)}
 		</>
 	);
 }

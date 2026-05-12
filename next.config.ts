@@ -20,7 +20,13 @@ const nextConfig: NextConfig = {
 				hostname: 'i.pravatar.cc',
 				pathname: '/**',
 			},
+			{
+				protocol: 'https',
+				hostname: 'via.placeholder.com',
+				pathname: '/**',
+			},
 		],
+		unoptimized: true,
 	},
 	env: {
 		// This ensures env variables are available at build time
