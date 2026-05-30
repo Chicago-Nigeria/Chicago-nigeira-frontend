@@ -18,6 +18,7 @@ import Badge from "./badge";
 import MobileNavigation from "./mobilenav";
 import { Message, Notification } from "@/app/services";
 import { useSession } from "@/app/store/useSession";
+import { PromoteBusinessLink, PromoteBusinessCard } from "@/app/components/PromoteBusiness";
 
 export type NavItem = {
 	href: string;
@@ -105,8 +106,13 @@ export default function SideNavigation({
 									</Link>
 								),
 							)}
+							{/* Distinct entry point for the social media service */}
+							{/* <div className="pt-1">
+								<PromoteBusinessLink />
+							</div> */}
 						</aside>
-						<div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+						<PromoteBusinessCard />
+						{/* <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
 							<h2 className="flex items-center gap-2 text-sm font-semibold">
 								<TrendingUp className="text-[var(--primary-color)] w-5 h-5" />
 								Trending Now
@@ -118,7 +124,7 @@ export default function SideNavigation({
 									Trending topics will be available here
 								</p>
 							</div>
-						</div>
+						</div> */}
 					</div>
 				</aside>
 				<section className="bg-transparent">{children}</section>

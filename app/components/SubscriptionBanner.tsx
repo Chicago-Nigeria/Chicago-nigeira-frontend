@@ -3,12 +3,20 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, X, TrendingUp } from "lucide-react";
 
+// Dismissing the banner snoozes it for 7 days (instead of hiding it forever),
+// so the offer stays discoverable without nagging users on every visit.
+const SNOOZE_KEY = "sub_banner_snoozed_until";
+const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 export default function SubscriptionBanner() {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        // Show banner only if it hasn't been dismissed previously
-        if (!localStorage.getItem("hide_sub_banner")) {
+        const snoozedUntil = Number(localStorage.getItem(SNOOZE_KEY));
+        // Show if never snoozed, or the snooze window has elapsed.
+        if (!snoozedUntil || Date.now() > snoozedUntil) {
+            // Clear stale legacy permanent-dismiss flag from the old behavior.
+            localStorage.removeItem("hide_sub_banner");
             setIsVisible(true);
         }
     }, []);
@@ -17,7 +25,7 @@ export default function SubscriptionBanner() {
     if (!isVisible) return null;
 
     const handleDismiss = () => {
-        localStorage.setItem("hide_sub_banner", "true");
+        localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
         setIsVisible(false);
     };
 
@@ -33,7 +41,7 @@ export default function SubscriptionBanner() {
                             Grow Your Business <Sparkles className="w-3 h-3 text-yellow-300" />
                         </h3>
                         <p className="text-emerald-50 text-xs mt-0.5 line-clamp-2 sm:line-clamp-1 max-w-xl">
-                            No time to post? Let our experts handle your social media management and content for just $65/mo.
+                            No time to post? Let our experts handle your social media management and content. Plans from $65/mo.
                         </p>
                     </div>
                 </div>

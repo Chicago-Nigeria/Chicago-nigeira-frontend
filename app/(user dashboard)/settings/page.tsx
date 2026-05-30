@@ -16,7 +16,7 @@ type TabType = "profile" | "payments" | "account" | "notifications" | "privacy";
 
 const tabs = [
 	{ id: "profile" as TabType, label: "Profile", icon: UserIcon },
-	{ id: "payments" as TabType, label: "Payments", icon: CreditCard },
+	{ id: "payments" as TabType, label: "Billing", icon: CreditCard },
 	// { id: "account" as TabType, label: "Account", icon: Shield },
 	{ id: "notifications" as TabType, label: "Notifications", icon: Bell },
 	{ id: "privacy" as TabType, label: "Privacy", icon: Lock },

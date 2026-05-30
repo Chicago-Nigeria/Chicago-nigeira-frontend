@@ -6,6 +6,14 @@ import { Search, Loader2, CheckCircle, XCircle, AlertCircle, Eye, MoreVertical, 
 import { toast } from 'sonner';
 import { Loader } from '@/app/components/loader';
 
+interface SubscriptionAddon {
+    id: string;
+    name: string;
+    quantity: number;
+    unitAmount: number;
+    amount: number;
+}
+
 interface SocialSubscription {
     id: string;
     user: {
@@ -19,7 +27,10 @@ interface SocialSubscription {
     businessType: string;
     status: string;
     uiStatus?: string;
+    planId?: string;
+    planName?: string;
     amount: number;
+    addons?: SubscriptionAddon[];
     currentPeriodEnd: string;
     cancelAtPeriodEnd: boolean;
     contactEmail: string;
@@ -50,10 +61,37 @@ export default function SubscriptionsPage() {
     const [showDropdown, setShowDropdown] = useState<string | null>(null);
     const [dropdownStyle, setDropdownStyle] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
     const [showDetailsModal, setShowDetailsModal] = useState<SocialSubscription | null>(null);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     useEffect(() => {
         fetchSubscriptions();
     }, [page, search, statusFilter]);
+
+    const handleAdminAction = async (
+        sub: SocialSubscription,
+        action: 'cancel' | 'reactivate'
+    ) => {
+        const confirmMsg = action === 'cancel'
+            ? `Cancel ${sub.businessName}'s subscription? It stays active until the end of the current billing period.`
+            : `Reactivate auto-renew for ${sub.businessName}'s subscription?`;
+        if (!confirm(confirmMsg)) return;
+
+        setActionLoading(sub.id);
+        setShowDropdown(null);
+        const { data, error } = await callApi<{ success: boolean; message?: string }>(
+            `/subscriptions/admin/${sub.id}/${action}`,
+            'POST'
+        );
+        if (error) {
+            toast.error(error.message || `Failed to ${action} subscription`);
+        } else {
+            toast.success(data?.message || (action === 'cancel'
+                ? 'Subscription scheduled for cancellation.'
+                : 'Subscription reactivated.'));
+            fetchSubscriptions();
+        }
+        setActionLoading(null);
+    };
 
     const fetchSubscriptions = async () => {
         setLoading(true);
@@ -240,8 +278,14 @@ export default function SubscriptionsPage() {
                                                 <div className="text-sm text-gray-900">{sub.businessName}</div>
                                                 <div className="text-xs text-gray-500">{sub.businessType}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                ${(sub.amount / 100).toFixed(2)}/mo
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">{sub.planName || 'Social Media Management'}</div>
+                                                <div className="text-xs text-gray-500">
+                                                    ${(sub.amount / 100).toFixed(2)}/mo
+                                                    {sub.addons && sub.addons.length > 0 && (
+                                                        <span className="ml-1 text-green-600">+{sub.addons.length} add-on{sub.addons.length > 1 ? 's' : ''}</span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {getStatusBadge(sub.uiStatus || sub.status, sub.cancelAtPeriodEnd)}
@@ -252,9 +296,14 @@ export default function SubscriptionsPage() {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative">
                                                 <button
                                                     onClick={(e) => handleDropdownToggle(sub.id, e)}
-                                                    className="text-gray-400 hover:text-gray-600"
+                                                    disabled={actionLoading === sub.id}
+                                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
                                                 >
-                                                    <MoreVertical className="h-5 w-5" />
+                                                    {actionLoading === sub.id ? (
+                                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                                    ) : (
+                                                        <MoreVertical className="h-5 w-5" />
+                                                    )}
                                                 </button>
 
                                                 {showDropdown === sub.id && (
@@ -277,6 +326,32 @@ export default function SubscriptionsPage() {
                                                             >
                                                                 <Eye className="w-4 h-4" /> View Details
                                                             </button>
+
+                                                            {(() => {
+                                                                const status = sub.uiStatus || sub.status;
+                                                                const canCancel = status === 'active';
+                                                                const canReactivate = status === 'cancels_soon' || (status === 'active' && sub.cancelAtPeriodEnd);
+                                                                return (
+                                                                    <>
+                                                                        {canReactivate && (
+                                                                            <button
+                                                                                onClick={() => handleAdminAction(sub, 'reactivate')}
+                                                                                className="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50 flex items-center gap-2"
+                                                                            >
+                                                                                <CheckCircle className="w-4 h-4" /> Reactivate Auto-Renew
+                                                                            </button>
+                                                                        )}
+                                                                        {canCancel && !sub.cancelAtPeriodEnd && (
+                                                                            <button
+                                                                                onClick={() => handleAdminAction(sub, 'cancel')}
+                                                                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                                            >
+                                                                                <XCircle className="w-4 h-4" /> Cancel Subscription
+                                                                            </button>
+                                                                        )}
+                                                                    </>
+                                                                );
+                                                            })()}
                                                         </div>
                                                     </>
                                                 )}
@@ -314,6 +389,36 @@ export default function SubscriptionsPage() {
                                         <p className="text-xs mt-0.5">Cancels on {new Date(showDetailsModal.currentPeriodEnd).toLocaleDateString()}</p>
                                     )}
                                 </div>
+                            </div>
+
+                            {/* Plan & Billing */}
+                            <div className="bg-gray-50 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <span className="text-xs text-gray-400 block">Plan</span>
+                                        <span className="text-sm font-semibold text-gray-900">{showDetailsModal.planName || 'Social Media Management'}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs text-gray-400 block">Monthly Total</span>
+                                        <span className="text-lg font-bold text-gray-900">${(showDetailsModal.amount / 100).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                {showDetailsModal.addons && showDetailsModal.addons.length > 0 && (
+                                    <div className="mt-4 border-t border-gray-200 pt-3">
+                                        <span className="text-xs text-gray-400 block mb-2">Add-Ons</span>
+                                        <ul className="space-y-1">
+                                            {showDetailsModal.addons.map((addon) => (
+                                                <li key={addon.id} className="flex items-center justify-between text-sm text-gray-700">
+                                                    <span>
+                                                        {addon.name}
+                                                        {addon.quantity > 1 ? ` × ${addon.quantity}` : ''}
+                                                    </span>
+                                                    <span className="font-medium">${(addon.amount / 100).toFixed(2)}/mo</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-6">

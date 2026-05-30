@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { callApi } from '@/app/libs/helper/callApi';
 import { ApiResponse } from '@/app/types';
-import {  Search, MoreVertical, Ban, CheckCircle, Trash2, Eye, UserPlus, X, Mail, Phone, Calendar, Activity, Copy } from 'lucide-react';
+import {  Search, MoreVertical, Ban, CheckCircle, Trash2, Eye, UserPlus, X, Mail, Phone, Calendar, Activity, Copy, ShieldCheck, ShieldOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {Loader} from '@/app/components/loader';
 
@@ -41,9 +41,65 @@ export default function UsersPage() {
   const [showUnbanModal, setShowUnbanModal] = useState<User | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<User | null>(null);
 
+  // Add Admin modal state
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [searchingUser, setSearchingUser] = useState(false);
+  const [foundUser, setFoundUser] = useState<{ id: string; firstName: string; lastName: string; email: string; photo?: string } | null>(null);
+  const [searchError, setSearchError] = useState('');
+  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+
   useEffect(() => {
     fetchUsers();
   }, [page, search, roleFilter, statusFilter]);
+
+  const openAddAdminModal = () => {
+    setAdminEmail('');
+    setFoundUser(null);
+    setSearchError('');
+    setShowAddAdminModal(true);
+  };
+
+  const handleSearchUser = async () => {
+    const email = adminEmail.trim().toLowerCase();
+    if (!email) {
+      setSearchError('Please enter an email address');
+      return;
+    }
+    setSearchingUser(true);
+    setSearchError('');
+    setFoundUser(null);
+
+    const { data, error } = await callApi<ApiResponse<{ id: string; firstName: string; lastName: string; email: string; photo?: string }>>(
+      `/admin/users/search?email=${encodeURIComponent(email)}`,
+      'GET'
+    );
+
+    if (error || !data?.data) {
+      setSearchError(error?.message || 'No user found with this email address');
+    } else {
+      setFoundUser(data.data);
+    }
+    setSearchingUser(false);
+  };
+
+  const handleUpdateRole = async (userId: string, role: 'admin' | 'user', closeAddAdmin = false) => {
+    setUpdatingRole(userId);
+    const { error } = await callApi(
+      `/admin/users/${userId}/role`,
+      'PUT',
+      { role }
+    );
+
+    if (error) {
+      toast.error(error.message || 'Failed to update user role');
+    } else {
+      toast.success(role === 'admin' ? 'Admin access granted' : 'Admin access removed');
+      fetchUsers();
+      if (closeAddAdmin) setShowAddAdminModal(false);
+    }
+    setUpdatingRole(null);
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -193,7 +249,10 @@ export default function UsersPage() {
             Manage and monitor all platform users
           </p>
         </div>
-        <button className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 flex items-center justify-center gap-2 text-sm md:text-base">
+        <button
+          onClick={openAddAdminModal}
+          className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 flex items-center justify-center gap-2 text-sm md:text-base"
+        >
           <UserPlus className="h-4 w-4 md:h-5 md:w-5" />
           Add Admin
         </button>
@@ -516,6 +575,23 @@ export default function UsersPage() {
                               Unban
                             </button>
                           )}
+                          {user.role === 'admin' ? (
+                            <button
+                              onClick={() => { handleUpdateRole(user.id, 'user'); setShowDropdown(null); }}
+                              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                              <ShieldOff className="h-4 w-4" />
+                              Remove Admin
+                            </button>
+                          ) : user.role !== 'super_admin' ? (
+                            <button
+                              onClick={() => { handleUpdateRole(user.id, 'admin'); setShowDropdown(null); }}
+                              className="w-full px-3 py-2 text-left text-sm text-emerald-700 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                              <ShieldCheck className="h-4 w-4" />
+                              Make Admin
+                            </button>
+                          ) : null}
                           <button
                             onClick={() => { setShowDeleteModal(user); setShowDropdown(null); }}
                             className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
@@ -738,6 +814,78 @@ export default function UsersPage() {
       )}
 
       {/* Ban Modal */}
+      {/* Add Admin Modal */}
+      {showAddAdminModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                Add Admin
+              </h3>
+              <button onClick={() => setShowAddAdminModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Search for an existing user by email, then grant them admin access.
+            </p>
+
+            <div className="flex gap-2 mb-2">
+              <input
+                type="email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSearchUser(); }}
+                placeholder="user@example.com"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+              />
+              <button
+                onClick={handleSearchUser}
+                disabled={searchingUser}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-60"
+              >
+                {searchingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                Search
+              </button>
+            </div>
+
+            {searchError && (
+              <p className="text-sm text-red-600 mb-3">{searchError}</p>
+            )}
+
+            {foundUser && (
+              <div className="border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+                    {foundUser.firstName?.[0]}{foundUser.lastName?.[0]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{foundUser.firstName} {foundUser.lastName}</p>
+                    <p className="text-xs text-gray-500">{foundUser.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleUpdateRole(foundUser.id, 'admin', true)}
+                  disabled={updatingRole === foundUser.id}
+                  className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {updatingRole === foundUser.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                  Grant Admin Access
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowAddAdminModal(false)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {showBanModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">

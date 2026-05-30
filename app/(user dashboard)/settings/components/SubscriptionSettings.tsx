@@ -7,10 +7,20 @@ import { Loader2, Calendar, CreditCard, AlertTriangle, CheckCircle, XCircle, Ale
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+interface SubscriptionAddon {
+    id: string;
+    name: string;
+    quantity: number;
+    unitAmount: number;
+    amount: number;
+}
+
 interface Subscription {
     id: string;
+    planId?: string;
     planName: string;
     amount: number;
+    addons?: SubscriptionAddon[];
     status: string;
     uiStatus?: "active" | "cancels_soon" | "cancelled" | "expired" | "past_due" | string;
     currentPeriodEnd: string;
@@ -183,6 +193,23 @@ export default function SubscriptionSettings() {
                             </div>
                         </div>
                     </div>
+
+                    {subscription.addons && subscription.addons.length > 0 && (
+                        <div>
+                            <p className="text-sm font-medium text-gray-500 mb-2">Add-Ons</p>
+                            <ul className="space-y-1.5">
+                                {subscription.addons.map((addon) => (
+                                    <li key={addon.id} className="flex items-center justify-between text-sm text-gray-700">
+                                        <span>
+                                            {addon.name}
+                                            {addon.quantity > 1 ? ` × ${addon.quantity}` : ""}
+                                        </span>
+                                        <span className="font-medium">${(addon.amount / 100).toFixed(2)}/mo</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
 
                     {isCancelling && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">

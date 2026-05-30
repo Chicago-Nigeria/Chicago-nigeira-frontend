@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Bell, Menu, Search, X, User, Settings as SettingsIcon, LogOut, ChevronDown } from "lucide-react";
+import { Bell, Menu, Search, X, User, Settings as SettingsIcon, LogOut, ChevronDown, Megaphone } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Badge from "./badge";
 import { useSession } from "@/app/store/useSession";
@@ -168,6 +168,14 @@ export default function TopNavigation() {
 										>
 											<SettingsIcon className="w-4 h-4" />
 											Settings
+										</Link>
+										<Link
+											href="/social-media-subscription"
+											onClick={() => setDropdownOpen(false)}
+											className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[var(--primary-color)] hover:bg-emerald-50 transition-colors border-t border-gray-100"
+										>
+											<Megaphone className="w-4 h-4" />
+											Promote Business
 										</Link>
 										<button
 											onClick={handleLogout}
